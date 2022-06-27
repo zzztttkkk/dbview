@@ -11,7 +11,7 @@ type _FsNamespace struct{}
 //goland:noinspection GoUnusedGlobalVariable
 var Fs = _FsNamespace{}
 
-func (_FsNamespace) AppPath() (string, error) {
+func (_FsNamespace) appPath() (string, error) {
 	p, e := os.UserConfigDir()
 	if e != nil {
 		return "", e
@@ -20,7 +20,7 @@ func (_FsNamespace) AppPath() (string, error) {
 }
 
 func (fs _FsNamespace) Mkdir(fp string) error {
-	root, e := fs.AppPath()
+	root, e := fs.appPath()
 	if e != nil {
 		return e
 	}
@@ -28,7 +28,7 @@ func (fs _FsNamespace) Mkdir(fp string) error {
 }
 
 func (fs _FsNamespace) ReadAll(fp string) ([]byte, error) {
-	root, e := fs.AppPath()
+	root, e := fs.appPath()
 	if e != nil {
 		return nil, e
 	}
@@ -40,7 +40,7 @@ func (fs _FsNamespace) ReadAll(fp string) ([]byte, error) {
 }
 
 func (fs _FsNamespace) WriteTo(fp string, bytes []byte) error {
-	root, e := fs.AppPath()
+	root, e := fs.appPath()
 	if e != nil {
 		return e
 	}
@@ -53,21 +53,8 @@ func (fs _FsNamespace) WriteTo(fp string, bytes []byte) error {
 	return e
 }
 
-func (fs _FsNamespace) AppendTo(fp string, bytes []byte) error {
-	root, e := fs.AppPath()
-	if e != nil {
-		return e
-	}
-	f, e := os.OpenFile(path.Join(root, fp), os.O_APPEND|os.O_CREATE, 0664)
-	if e != nil {
-		return e
-	}
-	_, e = f.Write(bytes)
-	return e
-}
-
 func (fs _FsNamespace) Exists(fp string) (bool, error) {
-	root, e := fs.AppPath()
+	root, e := fs.appPath()
 	if e != nil {
 		return false, e
 	}
