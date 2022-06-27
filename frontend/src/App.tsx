@@ -1,6 +1,6 @@
 import {useState} from 'react';
 import logo from './assets/images/logo-universal.png';
-import './App.css';
+import './App.less';
 import {Greet} from "../wailsjs/go/main/App";
 
 function App() {

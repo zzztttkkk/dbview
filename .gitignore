@@ -18,6 +18,6 @@ frontend/dist
 frontend/node_modules
 build
 
-/.idea
-/.vscode
-/.vs
+**/.idea
+**/.vscode
+**/.vs

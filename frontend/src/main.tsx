@@ -1,6 +1,6 @@
 import React from 'react'
 import ReactDOM from 'react-dom'
-import './style.css'
+import './style.less'
 import App from './App'
 
 ReactDOM.render(
