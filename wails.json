@@ -1,0 +1,12 @@
+{
+  "name": "dbview",
+  "outputfilename": "dbview",
+  "frontend:install": "npm install",
+  "frontend:build": "npm run build",
+  "frontend:dev:watcher": "npm run dev",
+  "frontend:dev:serverUrl": "http://localhost:3000",
+  "author": {
+    "name": "zzztttkkk",
+    "email": "ztkisalreadytaken@gmail.com"
+  }
+}

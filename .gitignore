@@ -13,3 +13,11 @@
 
 # Dependency directories (remove the comment below to include it)
 # vendor/
+
+frontend/dist
+frontend/node_modules
+build
+
+/.idea
+/.vscode
+/.vs
