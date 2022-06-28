@@ -119,14 +119,31 @@ func (rp *RedisProxy) get(name string) (redis.Cmdable, error) {
 	return cli, nil
 }
 
-func (rp *RedisProxy) intcmd(name string, cmd string, args ...interface{}) (int64, error) {
+func (rp *RedisProxy) tryCall(fnv reflect.Value, in []reflect.Value) (val reflect.Value, err error) {
+	defer func() {
+		e := recover()
+		if e != nil {
+			switch e.(type) {
+			case error:
+				err = e.(error)
+				break
+			default:
+				err = fmt.Errorf("err: %v", e)
+			}
+		}
+	}()
+	outs := fnv.Call(in)
+	val = outs[0]
+	return
+}
+
+func (rp *RedisProxy) call(name string, cmd string, args ...interface{}) (interface{}, error) {
 	cli, err := rp.get(name)
 	if err != nil {
-		return 0, err
+		return nil, err
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(float64(time.Second)*rp.timeout))
 	defer cancel()
-
 	cliv := reflect.ValueOf(cli).Elem()
 	fnv := cliv.MethodByName(cmd)
 	var inargs []reflect.Value
@@ -134,8 +151,91 @@ func (rp *RedisProxy) intcmd(name string, cmd string, args ...interface{}) (int6
 	for _, arg := range args {
 		inargs = append(inargs, reflect.ValueOf(arg))
 	}
-	outs := fnv.Call(inargs)
-	return (outs[0].Interface().(*redis.IntCmd)).Result()
+	v, e := rp.tryCall(fnv, inargs)
+	if e != nil {
+		return nil, e
+	}
+	return v.Interface(), nil
+}
+
+func (rp *RedisProxy) intcmd(name string, cmd string, args ...interface{}) (int64, error) {
+	resp, err := rp.call(name, cmd, args...)
+	if err != nil {
+		return 0, err
+	}
+	return (resp.(*redis.IntCmd)).Result()
+}
+
+func (rp *RedisProxy) floatcmd(name string, cmd string, args ...interface{}) (float64, error) {
+	resp, err := rp.call(name, cmd, args...)
+	if err != nil {
+		return 0, err
+	}
+	return (resp.(*redis.FloatCmd)).Result()
+}
+
+func (rp *RedisProxy) boolcmd(name string, cmd string, args ...interface{}) (bool, error) {
+	resp, err := rp.call(name, cmd, args...)
+	if err != nil {
+		return false, err
+	}
+	return (resp.(*redis.BoolCmd)).Result()
+}
+
+func (rp *RedisProxy) stringcmd(name string, cmd string, args ...interface{}) (string, error) {
+	resp, err := rp.call(name, cmd, args...)
+	if err != nil {
+		return "", err
+	}
+	return (resp.(*redis.StringCmd)).Result()
+}
+
+func (rp *RedisProxy) stringscmd(name string, cmd string, args ...interface{}) ([]string, error) {
+	resp, err := rp.call(name, cmd, args...)
+	if err != nil {
+		return nil, err
+	}
+	return (resp.(*redis.StringSliceCmd)).Result()
+}
+
+func (rp *RedisProxy) intscmd(name string, cmd string, args ...interface{}) ([]int64, error) {
+	resp, err := rp.call(name, cmd, args...)
+	if err != nil {
+		return nil, err
+	}
+	return (resp.(*redis.IntSliceCmd)).Result()
+}
+
+func (rp *RedisProxy) scancmd(name string, cmd string, args ...interface{}) (*redis.ScanIterator, error) {
+	resp, err := rp.call(name, cmd, args...)
+	if err != nil {
+		return nil, err
+	}
+	return (resp.(*redis.ScanCmd)).Iterator(), nil
+}
+
+func (rp *RedisProxy) mapcmd(name string, cmd string, args ...interface{}) (map[string]string, error) {
+	resp, err := rp.call(name, cmd, args...)
+	if err != nil {
+		return nil, err
+	}
+	return (resp.(*redis.StringStringMapCmd)).Result()
+}
+
+func (rp *RedisProxy) slicecmd(name string, cmd string, args ...interface{}) ([]interface{}, error) {
+	resp, err := rp.call(name, cmd, args...)
+	if err != nil {
+		return nil, err
+	}
+	return (resp.(*redis.SliceCmd)).Result()
+}
+
+func (rp *RedisProxy) xmsgscmd(name string, cmd string, args ...interface{}) ([]redis.XMessage, error) {
+	resp, err := rp.call(name, cmd, args...)
+	if err != nil {
+		return nil, err
+	}
+	return (resp.(*redis.XMessageSliceCmd)).Result()
 }
 
 func (rp *RedisProxy) Ping(name string) (int64, error) {
@@ -268,4 +368,20 @@ func (rp *RedisProxy) HSet(name string, key string, values ...interface{}) (int6
 		il = append(il, val)
 	}
 	return rp.intcmd(name, "HSet", il...)
+}
+
+func (rp *RedisProxy) linsert(name string, key, op string, pivot, val interface{}) (int64, error) {
+	return rp.intcmd(name, "LInsert", key, op, pivot, val)
+}
+
+func (rp *RedisProxy) LInsertBefore(name string, key string, pivot, val interface{}) (int64, error) {
+	return rp.linsert(name, key, "BEFORE", pivot, val)
+}
+
+func (rp *RedisProxy) LInsertAfter(name string, key string, pivot, val interface{}) (int64, error) {
+	return rp.linsert(name, key, "AFTER", pivot, val)
+}
+
+func (rp *RedisProxy) LLen(name string, key string) (int64, error) {
+	return rp.intcmd(name, "LLen", key)
 }
