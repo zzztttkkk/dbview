@@ -17,5 +17,5 @@ func init() {
 }
 
 func TestIntCmd(t *testing.T) {
-	fmt.Println(rp.Del("test", "ax", "bx"))
+	fmt.Println(rp.Del("test", []string{"ax", "bx"}))
 }

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"dbview/dbs"
 	"embed"
 
 	"github.com/wailsapp/wails/v2"
@@ -17,12 +18,13 @@ func main() {
 	// Create application with options
 	err := wails.Run(&options.App{
 		Title:     "DBView",
-		Width:     1024,
+		Width:     1366,
 		Height:    768,
 		Assets:    assets,
 		OnStartup: app.startup,
 		Bind: []interface{}{
 			app,
+			dbs.NewRedisProxy(0),
 		},
 	})
 

@@ -34,6 +34,18 @@ type RedisProxy struct {
 	timeout float64
 }
 
+func NewRedisProxy(timeout float64) *RedisProxy {
+	if timeout < 1 {
+		timeout = 1
+	}
+
+	return &RedisProxy{
+		opts:    map[string]*redis.Options{},
+		clis:    map[string]*redis.Client{},
+		timeout: timeout,
+	}
+}
+
 func (rp *RedisProxy) Register(name string, opts *RedisOpts) error {
 	rp.rw.Lock()
 	defer rp.rw.Unlock()
@@ -253,7 +265,7 @@ func (rp *RedisProxy) Ping(name string) (int64, error) {
 	return time.Now().UnixNano() - begin.UnixNano(), nil
 }
 
-func (rp *RedisProxy) Del(name string, keys ...string) (int64, error) {
+func (rp *RedisProxy) Del(name string, keys []string) (int64, error) {
 	var il []interface{}
 	for _, key := range keys {
 		il = append(il, key)
@@ -261,7 +273,7 @@ func (rp *RedisProxy) Del(name string, keys ...string) (int64, error) {
 	return rp.intcmd(name, "Del", il...)
 }
 
-func (rp *RedisProxy) Unlink(name string, keys ...string) (int64, error) {
+func (rp *RedisProxy) Unlink(name string, keys []string) (int64, error) {
 	var il []interface{}
 	for _, key := range keys {
 		il = append(il, key)
@@ -269,7 +281,7 @@ func (rp *RedisProxy) Unlink(name string, keys ...string) (int64, error) {
 	return rp.intcmd(name, "Unlink", il...)
 }
 
-func (rp *RedisProxy) Exists(name string, keys ...string) (int64, error) {
+func (rp *RedisProxy) Exists(name string, keys []string) (int64, error) {
 	var il []interface{}
 	for _, key := range keys {
 		il = append(il, key)
@@ -309,7 +321,7 @@ func (rp *RedisProxy) BitCount(name string, key string, start int64, end int64) 
 	return rp.intcmd(name, "BitCount", key, &redis.BitCount{Start: start, End: end})
 }
 
-func (rp *RedisProxy) bitop(name string, op string, dest string, keys ...string) (int64, error) {
+func (rp *RedisProxy) bitop(name string, op string, dest string, keys []string) (int64, error) {
 	var il []interface{}
 	il = append(il, dest)
 	for _, key := range keys {
@@ -318,20 +330,20 @@ func (rp *RedisProxy) bitop(name string, op string, dest string, keys ...string)
 	return rp.intcmd(name, fmt.Sprintf("BitOp%s", op), il...)
 }
 
-func (rp *RedisProxy) BitOpAnd(name string, dest string, keys ...string) (int64, error) {
-	return rp.bitop(name, "And", dest, keys...)
+func (rp *RedisProxy) BitOpAnd(name string, dest string, keys []string) (int64, error) {
+	return rp.bitop(name, "And", dest, keys)
 }
 
-func (rp *RedisProxy) BitOpOr(name string, dest string, keys ...string) (int64, error) {
-	return rp.bitop(name, "Or", dest, keys...)
+func (rp *RedisProxy) BitOpOr(name string, dest string, keys []string) (int64, error) {
+	return rp.bitop(name, "Or", dest, keys)
 }
 
-func (rp *RedisProxy) BitOpXor(name string, dest string, keys ...string) (int64, error) {
-	return rp.bitop(name, "Xor", dest, keys...)
+func (rp *RedisProxy) BitOpXor(name string, dest string, keys []string) (int64, error) {
+	return rp.bitop(name, "Xor", dest, keys)
 }
 
 func (rp *RedisProxy) BitOpNot(name string, dest string, key string) (int64, error) {
-	return rp.bitop(name, "Not", dest, key)
+	return rp.bitop(name, "Not", dest, []string{key})
 }
 
 func (rp *RedisProxy) BitPos(name string, key string, bit int64, pos ...int64) (int64, error) {
@@ -384,4 +396,12 @@ func (rp *RedisProxy) LInsertAfter(name string, key string, pivot, val interface
 
 func (rp *RedisProxy) LLen(name string, key string) (int64, error) {
 	return rp.intcmd(name, "LLen", key)
+}
+
+func (rp *RedisProxy) Expire(name string, key string, microseconds int64, opt string) (bool, error) {
+	return rp.boolcmd(name, fmt.Sprintf("Expire%s", opt), key, time.Duration(microseconds)*time.Microsecond)
+}
+
+func (rp *RedisProxy) Keys(name string, pattern string) ([]string, error) {
+	return rp.stringscmd(name, "Keys", pattern)
 }
