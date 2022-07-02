@@ -8,23 +8,16 @@ import {ProjectView} from './ProjectView';
 function App() {
     const [projects, setProjects] = useState({} as main.Projects);
 
-    useEffect(() => {
-        const promise = ListProjects();
-        promise.then((v) => {
-            if (v instanceof Error) {
-                return;
-            }
-            setProjects(v);
-        });
-    }, []);
-
     async function reload() {
         const ps = await ListProjects();
-        if (ps instanceof Error) {
-            return;
-        }
+        if (ps instanceof Error) return;
         setProjects(ps);
     }
+
+    useEffect(() => {
+        reload().finally(() => {
+        });
+    }, []);
 
     return (
         <HashRouter>

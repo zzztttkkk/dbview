@@ -37,15 +37,15 @@ export function Home(props: HomeProps) {
                 setName(e.target.value)
             }}
                 placeholder={"Project Name"}
+                autoComplete={"off"}
             />
             <button
                 onClick={
                     async () => {
                         if (!name) return;
+                        setName("");
                         const err = await CreateProject(name);
-                        if (err != null) {
-                            return;
-                        }
+                        if (err != null) return;
                         await props.reload();
                     }
                 }
