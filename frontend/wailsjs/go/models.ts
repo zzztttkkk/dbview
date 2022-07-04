@@ -64,12 +64,12 @@ export namespace dbs {
 
 export namespace main {
 	
-	export class Project {
+	export class ProjectListItem {
 	    name: string;
 	    last_active_at: number;
 	
 	    static createFrom(source: any = {}) {
-	        return new Project(source);
+	        return new ProjectListItem(source);
 	    }
 	
 	    constructor(source: any = {}) {
@@ -78,17 +78,17 @@ export namespace main {
 	        this.last_active_at = source["last_active_at"];
 	    }
 	}
-	export class Projects {
-	    all: Project[];
+	export class ProjectList {
+	    all: ProjectListItem[];
 	    default: string;
 	
 	    static createFrom(source: any = {}) {
-	        return new Projects(source);
+	        return new ProjectList(source);
 	    }
 	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.all = this.convertValues(source["all"], Project);
+	        this.all = this.convertValues(source["all"], ProjectListItem);
 	        this.default = source["default"];
 	    }
 	
@@ -109,6 +109,18 @@ export namespace main {
 		    }
 		    return a;
 		}
+	}
+	export class ProjectInfo {
+	    name: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new ProjectInfo(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.name = source["name"];
+	    }
 	}
 
 }

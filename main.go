@@ -17,11 +17,12 @@ func main() {
 
 	// Create application with options
 	err := wails.Run(&options.App{
-		Title:     "DBView",
-		Width:     1366,
-		Height:    768,
-		Assets:    assets,
-		OnStartup: app.startup,
+		Title:      "DBView",
+		Width:      1366,
+		Height:     768,
+		Assets:     assets,
+		OnStartup:  app.startup,
+		OnShutdown: app.shutdown,
 		Bind: []interface{}{
 			app,
 			dbs.NewRedisProxy(0),

@@ -2,7 +2,7 @@ import {Link} from "react-router-dom";
 import {main} from "../wailsjs/go/models";
 
 export interface ProjectViewProps {
-    project: main.Project
+    project: main.ProjectListItem
 }
 
 export function ProjectView(props: ProjectViewProps) {

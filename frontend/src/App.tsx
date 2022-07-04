@@ -6,7 +6,7 @@ import {main} from "../wailsjs/go/models";
 import {ProjectView} from './ProjectView';
 
 function App() {
-    const [projects, setProjects] = useState({} as main.Projects);
+    const [projects, setProjects] = useState({} as main.ProjectList);
 
     async function reload() {
         const ps = await ListProjects();

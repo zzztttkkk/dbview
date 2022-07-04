@@ -4,7 +4,7 @@ import {useState} from "react";
 import {CreateProject} from "../wailsjs/go/main/App";
 
 export interface HomeProps {
-    projects: main.Projects;
+    projects: main.ProjectList;
     reload: () => Promise<void>;
 }
 

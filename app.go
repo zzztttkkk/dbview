@@ -14,20 +14,27 @@ import (
 type App struct {
 	ctx context.Context
 
-	root     string
-	projects *_GlobalData
+	root            string
+	projectListData *ProjectListData
+	projectInfo     map[string]*ProjectInfo
 }
 
 // NewApp creates a new App application struct
 func NewApp() *App {
-	return &App{}
+	return &App{
+		projectInfo: map[string]*ProjectInfo{},
+	}
 }
 
 func (app *App) startup(ctx context.Context) {
 	app.ctx = ctx
 }
 
-type Project struct {
+func (app *App) shutdown(_ context.Context) {
+	app.writeProjectList()
+}
+
+type ProjectListItem struct {
 	Name         string `json:"name"`
 	LastActiveAt int64  `json:"last_active_at"`
 }
@@ -53,28 +60,29 @@ func (app *App) Root() string {
 	return app.root
 }
 
-type _GlobalData struct {
+type ProjectListData struct {
 	LastActiveAts map[string]int64 `json:"last_active_ats"`
 	Default       string           `json:"default"`
 }
 
-func (app *App) readGlobalData() *_GlobalData {
-	if app.projects != nil {
-		return app.projects
+func (app *App) readProjectList() *ProjectListData {
+	if app.projectListData != nil {
+		return app.projectListData
 	}
+	app.projectListData = &ProjectListData{LastActiveAts: map[string]int64{}}
 	fc, e := ioutil.ReadFile(path.Join(app.Root(), "projects.json"))
 	if e != nil {
+		return app.projectListData
+	}
+	app.projectListData.LastActiveAts = nil
+	if e = json.Unmarshal(fc, app.projectListData); e != nil {
 		return nil
 	}
-	var gd _GlobalData
-	if e = json.Unmarshal(fc, &gd); e != nil {
-		return nil
-	}
-	return &gd
+	return app.projectListData
 }
 
-func (app *App) writeGlobalData() {
-	if app.projects == nil {
+func (app *App) writeProjectList() {
+	if app.projectListData == nil {
 		return
 	}
 	fn := path.Join(app.Root(), "projects.json")
@@ -82,32 +90,32 @@ func (app *App) writeGlobalData() {
 	if e != nil {
 		return
 	}
-	d, e := json.Marshal(app.projects)
+	d, e := json.Marshal(app.projectListData)
 	if e != nil {
 		return
 	}
 	_, _ = f.Write(d)
 }
 
-type Projects struct {
-	All     []Project `json:"all"`
-	Default string    `json:"default"`
+type ProjectList struct {
+	All     []ProjectListItem `json:"all"`
+	Default string            `json:"default"`
 }
 
-func (app *App) ListProjects() (Projects, error) {
+func (app *App) ListProjects() (ProjectList, error) {
 	root := app.Root()
 
 	files, err := ioutil.ReadDir(root)
 	if err != nil {
-		return Projects{}, err
+		return ProjectList{}, err
 	}
 
-	gd := app.readGlobalData()
+	gd := app.readProjectList()
 
-	var projects Projects
+	var projects ProjectList
 	for _, f := range files {
 		if f.IsDir() {
-			proj := Project{Name: f.Name()}
+			proj := ProjectListItem{Name: f.Name()}
 			if gd != nil && gd.LastActiveAts != nil {
 				proj.LastActiveAt = gd.LastActiveAts[f.Name()]
 			}
@@ -146,13 +154,31 @@ func (app *App) CreateProject(name string) error {
 		panic(err)
 	}
 
-	gd := app.readGlobalData()
+	gd := app.readProjectList()
 	if gd == nil {
-		gd = &_GlobalData{
+		gd = &ProjectListData{
 			LastActiveAts: map[string]int64{},
 		}
 	}
 	gd.LastActiveAts[name] = time.Now().Unix()
-	app.writeGlobalData()
+	app.writeProjectList()
 	return os.MkdirAll(fp, os.ModePerm)
+}
+
+type ProjectInfo struct {
+	Name      string   `json:"name"`
+	RedisList []string `json:"redis_list"`
+}
+
+func (app *App) OpenProject(name string) ProjectInfo {
+	info, ok := app.projectInfo[name]
+	if ok {
+		return *info
+	}
+	pinfo := &ProjectInfo{
+		Name: name,
+	}
+	app.projectInfo[name] = pinfo
+	app.projectListData.LastActiveAts[name] = time.Now().Unix()
+	return *pinfo
 }
