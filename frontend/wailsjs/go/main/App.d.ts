@@ -6,6 +6,6 @@ export function CreateProject(arg1:string):Promise<Error>;
 
 export function ListProjects():Promise<main.ProjectList|Error>;
 
-export function OpenProject(arg1:string):Promise<main.ProjectInfo|Error>;
+export function OpenProject(arg1:string):Promise<main.ProjectInfo>;
 
 export function Root():Promise<string>;
