@@ -8,6 +8,9 @@ import {DarkTheme, LightTheme, LocaleProvider, Theme, ThemeProvider} from "baseu
 import {Provider as StyletronProvider} from 'styletron-react';
 import {Client as Styletron} from 'styletron-engine-atomic';
 
+function nothing() {
+}
+
 function Routers() {
     const [projects, setProjects] = useState({} as main.ProjectList);
 
@@ -18,25 +21,23 @@ function Routers() {
     }
 
     useEffect(() => {
-        reload().finally(() => {
-        });
+        reload().finally(nothing);
     }, []);
+
+    if (projects.all) {
+        projects.all.sort((a, b) => {
+            if (a.name === projects.default) return -1;
+            if (b.name === projects.default) return 1;
+            return b.last_active_at - a.last_active_at;
+        });
+    }
 
     return (
         <HashRouter>
             <Routes>
                 <Route path={"/"} key={"/"} element={<Home projects={projects} reload={reload}/>}/>
                 {
-                    (projects.all || []).sort(
-                        (a, b) => {
-                            if (a.name === projects.default) {
-                                return -1;
-                            }
-                            if (b.name === projects.default) {
-                                return 1;
-                            }
-                            return a.last_active_at - b.last_active_at;
-                        }).map((p) => {
+                    (projects.all || []).map((p) => {
                         return <Route path={`/${p.name}`} key={p.name} element={<ProjectView project={p}/>}/>
                     })
                 }

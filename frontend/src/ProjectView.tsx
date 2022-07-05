@@ -1,5 +1,6 @@
-import {Link} from "react-router-dom";
 import {main} from "../wailsjs/go/models";
+import React from "react";
+import {StyledLink} from "baseui/link";
 
 export interface ProjectViewProps {
     project: main.ProjectListItem
@@ -8,7 +9,7 @@ export interface ProjectViewProps {
 export function ProjectView(props: ProjectViewProps) {
     return <div>
         <div>
-            <Link to={"/"}>Home</Link>
+            <StyledLink href={"#/"}>Home</StyledLink>
         </div>
         <h1>{props.project.name}</h1>
     </div>
