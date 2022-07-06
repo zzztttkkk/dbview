@@ -66,6 +66,12 @@ type ProjectListData struct {
 }
 
 func (app *App) readProjectList() *ProjectListData {
+	defer func() {
+		if app.projectListData.LastActiveAts == nil {
+			app.projectListData.LastActiveAts = map[string]int64{}
+		}
+	}()
+
 	if app.projectListData != nil {
 		return app.projectListData
 	}
@@ -76,7 +82,7 @@ func (app *App) readProjectList() *ProjectListData {
 	}
 	app.projectListData.LastActiveAts = nil
 	if e = json.Unmarshal(fc, app.projectListData); e != nil {
-		return nil
+		return app.projectListData
 	}
 	return app.projectListData
 }
@@ -98,8 +104,7 @@ func (app *App) writeProjectList() {
 }
 
 type ProjectList struct {
-	All     []ProjectListItem `json:"all"`
-	Default string            `json:"default"`
+	All []ProjectListItem `json:"all"`
 }
 
 func (app *App) ListProjects() (ProjectList, error) {
@@ -110,34 +115,19 @@ func (app *App) ListProjects() (ProjectList, error) {
 		return ProjectList{}, err
 	}
 
-	gd := app.readProjectList()
+	list := app.readProjectList()
 
 	var projects ProjectList
 	for _, f := range files {
 		if f.IsDir() {
 			proj := ProjectListItem{Name: f.Name()}
-			if gd != nil && gd.LastActiveAts != nil {
-				proj.LastActiveAt = gd.LastActiveAts[f.Name()]
+			if list != nil && list.LastActiveAts != nil {
+				proj.LastActiveAt = list.LastActiveAts[f.Name()]
 			}
 			projects.All = append(projects.All, proj)
 			continue
 		}
 	}
-
-	dp := ""
-	if gd != nil && len(gd.Default) > 0 {
-		fund := false
-		for _, p := range projects.All {
-			if p.Name == gd.Default {
-				fund = true
-				break
-			}
-		}
-		if fund {
-			dp = gd.Default
-		}
-	}
-	projects.Default = dp
 	return projects, nil
 }
 
@@ -151,7 +141,7 @@ func (app *App) CreateProject(name string) error {
 
 	err = os.Mkdir(fp, 0664)
 	if err != nil {
-		panic(err)
+		return err
 	}
 
 	gd := app.readProjectList()
@@ -159,9 +149,6 @@ func (app *App) CreateProject(name string) error {
 		gd = &ProjectListData{
 			LastActiveAts: map[string]int64{},
 		}
-	}
-	if gd.LastActiveAts == nil {
-		gd.LastActiveAts = map[string]int64{}
 	}
 	gd.LastActiveAts[name] = time.Now().Unix()
 	app.writeProjectList()

@@ -26,8 +26,6 @@ function Routers() {
 
     if (projects.all) {
         projects.all.sort((a, b) => {
-            if (a.name === projects.default) return -1;
-            if (b.name === projects.default) return 1;
             return b.last_active_at - a.last_active_at;
         });
     }
