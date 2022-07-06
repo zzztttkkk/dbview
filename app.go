@@ -160,6 +160,9 @@ func (app *App) CreateProject(name string) error {
 			LastActiveAts: map[string]int64{},
 		}
 	}
+	if gd.LastActiveAts == nil {
+		gd.LastActiveAts = map[string]int64{}
+	}
 	gd.LastActiveAts[name] = time.Now().Unix()
 	app.writeProjectList()
 	return os.MkdirAll(fp, os.ModePerm)

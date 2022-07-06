@@ -73,10 +73,10 @@ export function Home(props: HomeProps) {
                 overrides={{
                     BaseButton: {
                         style: {
-                            borderBottomLeftRadius: "1px",
-                            borderBottomRightRadius: "1px",
-                            borderTopRightRadius: "1px",
-                            borderTopLeftRadius: "1px"
+                            borderBottomLeftRadius: theme.borders.radius100,
+                            borderBottomRightRadius: theme.borders.radius100,
+                            borderTopRightRadius: theme.borders.radius100,
+                            borderTopLeftRadius: theme.borders.radius100
                         }
                     }
                 }}
