@@ -37,6 +37,8 @@ func (app *App) shutdown(_ context.Context) {
 type ProjectListItem struct {
 	Name         string `json:"name"`
 	LastActiveAt int64  `json:"last_active_at"`
+	Env          string `json:"env"`
+	ReadOnly     bool   `json:"read_only"`
 }
 
 func (app *App) Root() string {
@@ -62,7 +64,6 @@ func (app *App) Root() string {
 
 type ProjectListData struct {
 	LastActiveAts map[string]int64 `json:"last_active_ats"`
-	Default       string           `json:"default"`
 }
 
 func (app *App) readProjectList() *ProjectListData {
