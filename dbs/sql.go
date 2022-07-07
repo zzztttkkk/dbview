@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"reflect"
-	"strconv"
 	"sync"
 	"time"
 )
@@ -20,9 +19,9 @@ type SqlCommon struct {
 	Timeouts     float64               `json:"timeouts"`
 	Readonly     bool                  `json:"readonly"`
 
-	*sync.Mutex  `json:"-"`
-	_SqlDbOpener `json:"-"`
-	DB           *sql.DB `json:"-"`
+	*sync.Mutex `json:"-"`
+	_Driver     `json:"-"`
+	DB          *sql.DB `json:"-"`
 }
 
 type SqlField struct {
@@ -30,8 +29,9 @@ type SqlField struct {
 	Type string `json:"type"`
 }
 
-type _SqlDbOpener interface {
+type _Driver interface {
 	open() (*sql.DB, error)
+	cast(val interface{}, sqltype string) interface{}
 }
 
 type SqlResult struct {
@@ -115,19 +115,7 @@ func (sc *SqlCommon) Query(query string, params ...interface{}) (*SqlResult, err
 			if !reflect.ValueOf(val).IsValid() {
 				continue
 			}
-
-			switch result.Fields[i].Type {
-			case "VARCHAR", "CHAR", "TEXT", "JSON", "DATETIME", "DATE", "TIME":
-				vals[i] = string(val.([]byte))
-				break
-			case "BIGINT":
-				switch tv := val.(type) {
-				case []byte:
-					v, _ := strconv.ParseInt(string(tv), 10, 64)
-					vals[i] = v
-				}
-				break
-			}
+			vals[i] = sc.cast(val, result.Fields[i].Type)
 		}
 
 		result.Rows = append(result.Rows, vals)

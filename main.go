@@ -27,6 +27,7 @@ func main() {
 			app,
 			dbs.NewRedisProxy(0),
 			dbs.NewMysqlProxy(),
+			dbs.NewPostgresProxy(),
 		},
 	})
 

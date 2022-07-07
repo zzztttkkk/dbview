@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"github.com/go-sql-driver/mysql"
+	"strconv"
 	"sync"
 )
 
@@ -55,6 +56,21 @@ func (mo *MysqlOpts) open() (*sql.DB, error) {
 	return db, db.Ping()
 }
 
+func (mo *MysqlOpts) cast(val interface{}, sqltype string) interface{} {
+	switch sqltype {
+	case "VARCHAR", "CHAR", "TEXT", "JSON", "DATETIME", "DATE", "TIME":
+		return string(val.([]byte))
+	case "BIGINT":
+		switch tv := val.(type) {
+		case []byte:
+			v, _ := strconv.ParseInt(string(tv), 10, 64)
+			return v
+		}
+		break
+	}
+	return val
+}
+
 type MysqlProxy struct {
 	rw   sync.RWMutex
 	opts map[string]*MysqlOpts
@@ -71,7 +87,7 @@ func (proxy *MysqlProxy) Register(name string, opts MysqlOpts) {
 	nopts := &MysqlOpts{}
 	*nopts = opts
 	nopts.Mutex = &sync.Mutex{}
-	nopts._SqlDbOpener = nopts
+	nopts._Driver = nopts
 	proxy.opts[name] = nopts
 }
 

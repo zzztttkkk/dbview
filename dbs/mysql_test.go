@@ -3,6 +3,7 @@ package dbs
 import (
 	"encoding/json"
 	"fmt"
+	"sync"
 	"testing"
 )
 
@@ -12,9 +13,10 @@ func TestMysql(t *testing.T) {
 		Password: "123456",
 		DB:       "mysql",
 	}
-	mo._SqlDbOpener = &mo
+	mo.Mutex = &sync.Mutex{}
+	mo._Driver = &mo
 
-	r, e := mo.Query("select 1")
+	r, e := mo.Query("select 1 + 45")
 	if e != nil {
 		fmt.Println(e)
 		return
