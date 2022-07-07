@@ -15,14 +15,13 @@ type App struct {
 	sync.Mutex
 	ctx context.Context
 
-	root     string
-	projects *ProjectListData
-	infos    map[string]*ProjectInfo
+	root  string
+	items map[string]*ProjectListItem
 }
 
 func NewApp() *App {
 	return &App{
-		infos: map[string]*ProjectInfo{},
+		items: map[string]*ProjectListItem{},
 	}
 }
 
@@ -39,6 +38,7 @@ type ProjectListItem struct {
 	LastActiveAt int64  `json:"last_active_at"`
 	Env          string `json:"env"`
 	ReadOnly     bool   `json:"read_only"`
+	Color        string `json:"color"`
 }
 
 func (app *App) Root() string {
@@ -62,82 +62,68 @@ func (app *App) Root() string {
 	return app.root
 }
 
-type ProjectListData struct {
-	LastActiveAts map[string]int64 `json:"last_active_ats"`
-}
-
-func (app *App) projectList() *ProjectListData {
-	app.Lock()
-	defer app.Unlock()
-
-	if app.projects != nil {
-		return app.projects
-	}
-	app.projects = &ProjectListData{LastActiveAts: map[string]int64{}}
-	fc, e := ioutil.ReadFile(path.Join(app.Root(), "projects.json"))
-	if e != nil {
-		return app.projects
-	}
-	if e = json.Unmarshal(fc, app.projects); e != nil {
-		return app.projects
-	}
-	return app.projects
-}
-
 func (app *App) save() {
-	app.Lock()
-	defer app.Unlock()
-
-	if app.projects == nil {
-		return
-	}
 	fn := path.Join(app.Root(), "projects.json")
 	f, e := os.OpenFile(fn, os.O_WRONLY|os.O_CREATE, 0664)
 	if e != nil {
 		return
 	}
-	fmt.Println(app.projects)
-	d, e := json.MarshalIndent(app.projects, "", "\t")
+	d, e := json.MarshalIndent(app.items, "", "\t")
 	if e != nil {
 		return
 	}
 	_, _ = f.Write(d)
 }
 
-type ProjectList struct {
-	All []ProjectListItem `json:"all"`
-}
+func (app *App) ListProjects() ([]ProjectListItem, error) {
+	app.Lock()
+	defer app.Unlock()
 
-func (app *App) ListProjects() (ProjectList, error) {
 	root := app.Root()
 
 	files, err := ioutil.ReadDir(root)
 	if err != nil {
-		return ProjectList{}, err
+		return nil, err
 	}
 
-	list := app.projectList()
-
-	var projects ProjectList
-	for _, f := range files {
-		if f.IsDir() {
-			proj := ProjectListItem{Name: f.Name()}
-			proj.LastActiveAt = list.LastActiveAts[f.Name()]
-			if proj.LastActiveAt == 0 {
-				stat, _ := os.Stat(path.Join(app.Root(), f.Name()))
-				if stat != nil {
-					proj.LastActiveAt = stat.ModTime().Unix()
-					app.projects.LastActiveAts[f.Name()] = proj.LastActiveAt
+	if len(app.items) < 1 {
+		var previtems map[string]*ProjectListItem
+		fd, e := ioutil.ReadFile(path.Join(root, "projects.json"))
+		if e == nil {
+			_ = json.Unmarshal(fd, &previtems)
+		}
+		if previtems == nil {
+			previtems = map[string]*ProjectListItem{}
+		}
+		for _, f := range files {
+			if f.IsDir() {
+				proj := &ProjectListItem{Name: f.Name()}
+				if prevproj := previtems[f.Name()]; prevproj != nil {
+					*proj = *prevproj
 				}
+				if proj.LastActiveAt == 0 {
+					stat, _ := os.Stat(path.Join(app.Root(), f.Name()))
+					if stat != nil {
+						proj.LastActiveAt = stat.ModTime().Unix()
+					}
+				}
+				app.items[f.Name()] = proj
+				continue
 			}
-			projects.All = append(projects.All, proj)
-			continue
 		}
 	}
-	return projects, nil
+
+	var lst []ProjectListItem
+	for _, p := range app.items {
+		lst = append(lst, *p)
+	}
+	return lst, nil
 }
 
 func (app *App) CreateProject(name string) error {
+	app.Lock()
+	defer app.Unlock()
+
 	root := app.Root()
 	fp := path.Join(root, name)
 	_, err := os.Stat(fp)
@@ -149,16 +135,19 @@ func (app *App) CreateProject(name string) error {
 	if err != nil {
 		return err
 	}
-
-	gd := app.projectList()
-	if gd == nil {
-		gd = &ProjectListData{
-			LastActiveAts: map[string]int64{},
-		}
-	}
-	gd.LastActiveAts[name] = time.Now().Unix()
-	app.save()
+	app.items[name] = &ProjectListItem{Name: name, LastActiveAt: time.Now().Unix()}
 	return os.MkdirAll(fp, os.ModePerm)
+}
+
+func (app *App) SetColor(name string, color string) {
+	app.Lock()
+	defer app.Unlock()
+
+	proj := app.items[name]
+	if proj == nil {
+		return
+	}
+	proj.Color = color
 }
 
 type ProjectInfo struct {
@@ -167,15 +156,5 @@ type ProjectInfo struct {
 }
 
 func (app *App) OpenProject(name string) ProjectInfo {
-	info, ok := app.infos[name]
-	if ok {
-		return *info
-	}
-	pinfo := &ProjectInfo{
-		Name: name,
-	}
-	app.infos[name] = pinfo
-	app.projects.LastActiveAts[name] = time.Now().Unix()
-	app.save()
-	return *pinfo
+	return ProjectInfo{}
 }

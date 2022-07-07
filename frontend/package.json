@@ -11,6 +11,7 @@
     "baseui": "^11.2.0",
     "luxon": "^2.4.0",
     "react": "^16.14.0",
+    "react-color": "^2.19.3",
     "react-dom": "^16.14.0",
     "react-router-dom": "^6.3.0",
     "styletron-engine-atomic": "^1.4.8",
@@ -19,6 +20,7 @@
   "devDependencies": {
     "@types/luxon": "^2.3.2",
     "@types/react": "^18.0.14",
+    "@types/react-color": "^3.0.6",
     "@types/react-dom": "^18.0.5",
     "@types/styletron-engine-atomic": "^1.1.1",
     "@types/styletron-react": "^5.0.3",

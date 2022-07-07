@@ -15,7 +15,7 @@ function nothing() {
 }
 
 function Routers() {
-    const [projects, setProjects] = useState({} as main.ProjectList);
+    const [projects, setProjects] = useState([] as main.ProjectListItem[]);
 
     async function reload() {
         const ps = await ListProjects();
@@ -27,8 +27,8 @@ function Routers() {
         reload().finally(nothing);
     }, []);
 
-    if (projects.all) {
-        projects.all.sort((a, b) => {
+    if (projects) {
+        projects.sort((a, b) => {
             return b.last_active_at - a.last_active_at;
         });
     }
@@ -38,13 +38,13 @@ function Routers() {
             <Routes>
                 <Route path={"/"} key={"/"} element={<Home projects={projects} reload={reload}/>}/>
                 {
-                    (projects.all || []).map((p) => {
+                    (projects || []).map((p) => {
                         return (
                             <Route
                                 key={p.name}
                                 path={`/${p.name}`}
                                 element={
-                                    <ProjectView project={p} all={projects.all || []}/>
+                                    <ProjectView project={p} all={projects || []}/>
                                 }
                             />
                         )
