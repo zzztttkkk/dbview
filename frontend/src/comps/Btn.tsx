@@ -1,6 +1,7 @@
 import {useStyletron} from "baseui";
 import {Button, ButtonProps} from "baseui/button";
 import React from "react";
+import Styles from "./Styles";
 
 export function Btn(props: ButtonProps) {
     const [, theme] = useStyletron();
@@ -10,10 +11,7 @@ export function Btn(props: ButtonProps) {
             overrides={{
                 BaseButton: {
                     style: {
-                        borderBottomLeftRadius: theme.borders.radius100,
-                        borderBottomRightRadius: theme.borders.radius100,
-                        borderTopRightRadius: theme.borders.radius100,
-                        borderTopLeftRadius: theme.borders.radius100
+                        ...Styles.BorderRadiusSizing(theme)
                     }
                 }
             }}

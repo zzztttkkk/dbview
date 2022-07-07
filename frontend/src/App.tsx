@@ -8,6 +8,7 @@ import {DarkTheme, LightTheme, LocaleProvider, Theme, ThemeProvider} from "baseu
 import {Provider as StyletronProvider} from 'styletron-react';
 import {Client as Styletron} from 'styletron-engine-atomic';
 import * as Luxon from "luxon";
+import {ToasterContainer} from 'baseui/toast';
 
 Luxon.Settings.defaultLocale = "en";
 
@@ -34,24 +35,27 @@ function Routers() {
     }
 
     return (
-        <HashRouter>
-            <Routes>
-                <Route path={"/"} key={"/"} element={<Home projects={projects} reload={reload}/>}/>
-                {
-                    (projects || []).map((p) => {
-                        return (
-                            <Route
-                                key={p.name}
-                                path={`/${p.name}`}
-                                element={
-                                    <ProjectView project={p} all={projects || []}/>
-                                }
-                            />
-                        )
-                    })
-                }
-            </Routes>
-        </HashRouter>
+        <>
+            <HashRouter>
+                <Routes>
+                    <Route path={"/"} key={"/"} element={<Home projects={projects} reload={reload}/>}/>
+                    {
+                        (projects || []).map((p) => {
+                            return (
+                                <Route
+                                    key={p.name}
+                                    path={`/${p.name}`}
+                                    element={
+                                        <ProjectView project={p} all={projects || []}/>
+                                    }
+                                />
+                            )
+                        })
+                    }
+                </Routes>
+            </HashRouter>
+            <ToasterContainer/>
+        </>
     )
 }
 
