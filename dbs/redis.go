@@ -10,12 +10,6 @@ import (
 	"time"
 )
 
-type TLSConfig struct {
-	Cert       string `json:"cert"`
-	Key        string `json:"key"`
-	ServerName string `json:"server_name"`
-}
-
 type RedisOpts struct {
 	Uri      string     `json:"uri"`
 	Host     string     `json:"host"`

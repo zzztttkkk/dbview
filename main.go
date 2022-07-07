@@ -26,6 +26,7 @@ func main() {
 		Bind: []interface{}{
 			app,
 			dbs.NewRedisProxy(0),
+			dbs.NewMysqlProxy(),
 		},
 	})
 
