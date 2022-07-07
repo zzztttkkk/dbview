@@ -7,6 +7,7 @@ import {useStyletron} from "baseui";
 import {StyledLink} from "baseui/link";
 import {Btn} from "./comps/Btn";
 import {WindowSetTitle} from "../wailsjs/runtime";
+import * as Luxon from "luxon";
 
 export interface HomeProps {
     projects: main.ProjectList;
@@ -44,10 +45,21 @@ export function Home(props: HomeProps) {
                         return <ListItem key={p.name}>
                             <div className={css({display: "flex"})}>
                                 <StyledLink href={`/#/${p.name}`} target={"_self"}>
-                                    <h2 className={css({width: "12em", textOverflow: "ellipsis", overflowX: "hidden"})}>
+                                    <h2 className={css({
+                                        maxWidth: "12em",
+                                        textOverflow: "ellipsis",
+                                        overflowX: "hidden",
+                                    })}>
                                         {`${p.name}`}
                                     </h2>
                                 </StyledLink>
+                                <p className={css({
+                                    height: "100%",
+                                    lineHeight: "100%",
+                                    marginLeft: theme.sizing.scale400
+                                })}>
+                                    {Luxon.DateTime.fromSeconds(p.last_active_at).toRelative({})}
+                                </p>
                             </div>
                         </ListItem>
                     })

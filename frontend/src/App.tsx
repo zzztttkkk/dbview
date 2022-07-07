@@ -7,6 +7,9 @@ import {ProjectView} from './ProjectView';
 import {DarkTheme, LightTheme, LocaleProvider, Theme, ThemeProvider} from "baseui";
 import {Provider as StyletronProvider} from 'styletron-react';
 import {Client as Styletron} from 'styletron-engine-atomic';
+import * as Luxon from "luxon";
+
+Luxon.Settings.defaultLocale = "en";
 
 function nothing() {
 }
@@ -36,7 +39,15 @@ function Routers() {
                 <Route path={"/"} key={"/"} element={<Home projects={projects} reload={reload}/>}/>
                 {
                     (projects.all || []).map((p) => {
-                        return <Route path={`/${p.name}`} key={p.name} element={<ProjectView project={p}/>}/>
+                        return (
+                            <Route
+                                key={p.name}
+                                path={`/${p.name}`}
+                                element={
+                                    <ProjectView project={p} all={projects.all || []}/>
+                                }
+                            />
+                        )
                     })
                 }
             </Routes>

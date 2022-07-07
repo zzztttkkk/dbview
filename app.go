@@ -7,22 +7,22 @@ import (
 	"io/ioutil"
 	"os"
 	"path"
+	"sync"
 	"time"
 )
 
-// App struct
 type App struct {
+	sync.Mutex
 	ctx context.Context
 
-	root            string
-	projectListData *ProjectListData
-	projectInfo     map[string]*ProjectInfo
+	root     string
+	projects *ProjectListData
+	infos    map[string]*ProjectInfo
 }
 
-// NewApp creates a new App application struct
 func NewApp() *App {
 	return &App{
-		projectInfo: map[string]*ProjectInfo{},
+		infos: map[string]*ProjectInfo{},
 	}
 }
 
@@ -31,7 +31,7 @@ func (app *App) startup(ctx context.Context) {
 }
 
 func (app *App) shutdown(_ context.Context) {
-	app.writeProjectList()
+	app.save()
 }
 
 type ProjectListItem struct {
@@ -66,30 +66,29 @@ type ProjectListData struct {
 	LastActiveAts map[string]int64 `json:"last_active_ats"`
 }
 
-func (app *App) readProjectList() *ProjectListData {
-	defer func() {
-		if app.projectListData.LastActiveAts == nil {
-			app.projectListData.LastActiveAts = map[string]int64{}
-		}
-	}()
+func (app *App) projectList() *ProjectListData {
+	app.Lock()
+	defer app.Unlock()
 
-	if app.projectListData != nil {
-		return app.projectListData
+	if app.projects != nil {
+		return app.projects
 	}
-	app.projectListData = &ProjectListData{LastActiveAts: map[string]int64{}}
+	app.projects = &ProjectListData{LastActiveAts: map[string]int64{}}
 	fc, e := ioutil.ReadFile(path.Join(app.Root(), "projects.json"))
 	if e != nil {
-		return app.projectListData
+		return app.projects
 	}
-	app.projectListData.LastActiveAts = nil
-	if e = json.Unmarshal(fc, app.projectListData); e != nil {
-		return app.projectListData
+	if e = json.Unmarshal(fc, app.projects); e != nil {
+		return app.projects
 	}
-	return app.projectListData
+	return app.projects
 }
 
-func (app *App) writeProjectList() {
-	if app.projectListData == nil {
+func (app *App) save() {
+	app.Lock()
+	defer app.Unlock()
+
+	if app.projects == nil {
 		return
 	}
 	fn := path.Join(app.Root(), "projects.json")
@@ -97,7 +96,8 @@ func (app *App) writeProjectList() {
 	if e != nil {
 		return
 	}
-	d, e := json.Marshal(app.projectListData)
+	fmt.Println(app.projects)
+	d, e := json.MarshalIndent(app.projects, "", "\t")
 	if e != nil {
 		return
 	}
@@ -116,14 +116,19 @@ func (app *App) ListProjects() (ProjectList, error) {
 		return ProjectList{}, err
 	}
 
-	list := app.readProjectList()
+	list := app.projectList()
 
 	var projects ProjectList
 	for _, f := range files {
 		if f.IsDir() {
 			proj := ProjectListItem{Name: f.Name()}
-			if list != nil && list.LastActiveAts != nil {
-				proj.LastActiveAt = list.LastActiveAts[f.Name()]
+			proj.LastActiveAt = list.LastActiveAts[f.Name()]
+			if proj.LastActiveAt == 0 {
+				stat, _ := os.Stat(path.Join(app.Root(), f.Name()))
+				if stat != nil {
+					proj.LastActiveAt = stat.ModTime().Unix()
+					app.projects.LastActiveAts[f.Name()] = proj.LastActiveAt
+				}
 			}
 			projects.All = append(projects.All, proj)
 			continue
@@ -145,14 +150,14 @@ func (app *App) CreateProject(name string) error {
 		return err
 	}
 
-	gd := app.readProjectList()
+	gd := app.projectList()
 	if gd == nil {
 		gd = &ProjectListData{
 			LastActiveAts: map[string]int64{},
 		}
 	}
 	gd.LastActiveAts[name] = time.Now().Unix()
-	app.writeProjectList()
+	app.save()
 	return os.MkdirAll(fp, os.ModePerm)
 }
 
@@ -162,14 +167,15 @@ type ProjectInfo struct {
 }
 
 func (app *App) OpenProject(name string) ProjectInfo {
-	info, ok := app.projectInfo[name]
+	info, ok := app.infos[name]
 	if ok {
 		return *info
 	}
 	pinfo := &ProjectInfo{
 		Name: name,
 	}
-	app.projectInfo[name] = pinfo
-	app.projectListData.LastActiveAts[name] = time.Now().Unix()
+	app.infos[name] = pinfo
+	app.projects.LastActiveAts[name] = time.Now().Unix()
+	app.save()
 	return *pinfo
 }

@@ -6,6 +6,12 @@ export function CreateProject(arg1:string):Promise<Error>;
 
 export function ListProjects():Promise<main.ProjectList|Error>;
 
+export function Lock():void;
+
 export function OpenProject(arg1:string):Promise<main.ProjectInfo>;
 
 export function Root():Promise<string>;
+
+export function TryLock():Promise<boolean>;
+
+export function Unlock():void;

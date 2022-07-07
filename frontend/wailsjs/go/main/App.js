@@ -10,10 +10,22 @@ export function ListProjects() {
   return window['go']['main']['App']['ListProjects']();
 }
 
+export function Lock() {
+  window['go']['main']['App']['Lock']();
+}
+
 export function OpenProject(arg1) {
   return window['go']['main']['App']['OpenProject'](arg1);
 }
 
 export function Root() {
   return window['go']['main']['App']['Root']();
+}
+
+export function TryLock() {
+  return window['go']['main']['App']['TryLock']();
+}
+
+export function Unlock() {
+  window['go']['main']['App']['Unlock']();
 }

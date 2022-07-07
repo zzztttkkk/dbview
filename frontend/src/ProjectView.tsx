@@ -4,6 +4,7 @@ import {StyledLink} from "baseui/link";
 import {WindowSetTitle} from "../wailsjs/runtime";
 
 export interface ProjectViewProps {
+    all: main.ProjectListItem[];
     project: main.ProjectListItem;
 }
 
