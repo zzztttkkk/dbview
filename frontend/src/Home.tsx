@@ -70,6 +70,7 @@ export function Home(props: HomeProps) {
                 onChangeComplete={async (color) => {
                     if (!currentProjName) return;
                     await SetColor(currentProjName, color.hex);
+                    currentProjName = "";
                     await props.reload();
                 }}
             />
@@ -114,11 +115,11 @@ export function Home(props: HomeProps) {
                                                     width: "100vw",
                                                     height: "100vh"
                                                 });
-                                                const top = evtEle.offsetTop - (ulWrapperRef.current! as HTMLElement).scrollTop + 1;
+                                                const top = evtEle.offsetTop - (ulWrapperRef.current! as HTMLElement).scrollTop;
                                                 setColorPickerCss({
                                                     position: "absolute",
                                                     left: `${evtEle.offsetLeft + 1}px`,
-                                                    top: `${top}px`
+                                                    top: `${top + 1}px`
                                                 });
                                             } else {
                                                 setColorPickerWrapperCss({display: "none"});
