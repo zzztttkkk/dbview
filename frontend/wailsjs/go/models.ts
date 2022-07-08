@@ -1,42 +1,3 @@
-export namespace main {
-	
-	export class ProjectListItem {
-	    name: string;
-	    last_active_at: number;
-	    env: string;
-	    read_only: boolean;
-	    color: string;
-	
-	    static createFrom(source: any = {}) {
-	        return new ProjectListItem(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.name = source["name"];
-	        this.last_active_at = source["last_active_at"];
-	        this.env = source["env"];
-	        this.read_only = source["read_only"];
-	        this.color = source["color"];
-	    }
-	}
-	export class ProjectInfo {
-	    name: string;
-	    redis_list: string[];
-	
-	    static createFrom(source: any = {}) {
-	        return new ProjectInfo(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.name = source["name"];
-	        this.redis_list = source["redis_list"];
-	    }
-	}
-
-}
-
 export namespace dbs {
 	
 	export class TLSConfig {
@@ -254,6 +215,45 @@ export namespace dbs {
 		    }
 		    return a;
 		}
+	}
+
+}
+
+export namespace main {
+	
+	export class ProjectListItem {
+	    name: string;
+	    last_active_at: number;
+	    env: string;
+	    read_only: boolean;
+	    color: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new ProjectListItem(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.name = source["name"];
+	        this.last_active_at = source["last_active_at"];
+	        this.env = source["env"];
+	        this.read_only = source["read_only"];
+	        this.color = source["color"];
+	    }
+	}
+	export class ProjectInfo {
+	    name: string;
+	    redis_list: string[];
+	
+	    static createFrom(source: any = {}) {
+	        return new ProjectInfo(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.name = source["name"];
+	        this.redis_list = source["redis_list"];
+	    }
 	}
 
 }

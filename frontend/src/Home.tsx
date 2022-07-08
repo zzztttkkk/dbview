@@ -36,7 +36,7 @@ export function Home(props: HomeProps) {
     const [colorPickerWrapperCss, setColorPickerWrapperCss] = useState({display: "none"} as StyleObject);
     const [colorPickerCss, setColorPickerCss] = useState({} as React.CSSProperties);
     const [css, theme] = useStyletron();
-    const firstLiRef = useRef(null);
+    const ulWrapperRef = useRef(null);
     const colorPickerWrapperRef = useRef(null);
 
     function exists(): boolean {
@@ -51,7 +51,7 @@ export function Home(props: HomeProps) {
     useEffect(function () {
         WindowSetTitle("DBView");
 
-        const ele = firstLiRef.current as any as HTMLElement;
+        const ele = ulWrapperRef.current as any as HTMLElement;
         const fli = ele.querySelector("li");
         if (fli) setLiHeight(fli.clientHeight);
     }, [props.projects]);
@@ -75,7 +75,7 @@ export function Home(props: HomeProps) {
             />
         </div>
 
-        <div ref={firstLiRef} className={liHeight > 0 ? css({
+        <div ref={ulWrapperRef} className={liHeight > 0 ? css({
             maxHeight: `${liHeight * 6}px`,
             overflowY: "auto",
             overflowX: "hidden"
@@ -95,9 +95,12 @@ export function Home(props: HomeProps) {
                                         className={css({
                                             width: "16px",
                                             height: "16px",
-                                            background: p.color ? p.color : "#000",
+                                            background: p.color ? p.color : "",
                                             borderRadius: "50%",
-                                            cursor: "pointer"
+                                            cursor: "pointer",
+                                            borderColor: p.color ? "" : theme.colors.contentPositive,
+                                            borderStyle: p.color ? "none" : "solid",
+                                            borderWidth: p.color ? "0px" : "1px"
                                         })}
                                         onClick={(evt) => {
                                             evt.stopPropagation();
@@ -111,10 +114,11 @@ export function Home(props: HomeProps) {
                                                     width: "100vw",
                                                     height: "100vh"
                                                 });
+                                                const top = evtEle.offsetTop - (ulWrapperRef.current! as HTMLElement).scrollTop + 1;
                                                 setColorPickerCss({
-                                                    position: "relative",
-                                                    left: `${evtEle.offsetLeft}px`,
-                                                    top: `${evtEle.offsetTop}px`
+                                                    position: "absolute",
+                                                    left: `${evtEle.offsetLeft + 1}px`,
+                                                    top: `${top}px`
                                                 });
                                             } else {
                                                 setColorPickerWrapperCss({display: "none"});
