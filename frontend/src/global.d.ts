@@ -14,3 +14,5 @@ declare module "*.ico" {
 }
 
 declare function AppChangeTheme(name: string): void;
+
+declare function AppChangeLocale(name: string): void;

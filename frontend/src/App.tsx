@@ -9,8 +9,7 @@ import {Provider as StyletronProvider} from 'styletron-react';
 import {Client as Styletron} from 'styletron-engine-atomic';
 import * as Luxon from "luxon";
 import {ToasterContainer} from 'baseui/toast';
-
-Luxon.Settings.defaultLocale = "en";
+import {I18N} from './I18N';
 
 function nothing() {
 }
@@ -71,9 +70,15 @@ function App() {
     window.AppChangeTheme = (name: string) => {
         setThemeName(name);
     }
+    const [localeName, setLocaleName] = useState("en");
+    Luxon.Settings.defaultLocale = localeName;
+    window.AppChangeLocale = (name: string) => {
+        setLocaleName(name);
+    }
+
     return (
         <StyletronProvider value={engine}>
-            <LocaleProvider locale={{}}>
+            <LocaleProvider locale={I18N(localeName)}>
                 <ThemeProvider theme={themes[themeName] || LightTheme}>
                     <Routers/>
                 </ThemeProvider>

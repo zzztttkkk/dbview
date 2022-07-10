@@ -37,7 +37,6 @@ type ProjectListItem struct {
 	Name         string `json:"name"`
 	LastActiveAt int64  `json:"last_active_at"`
 	Env          string `json:"env"`
-	ReadOnly     bool   `json:"read_only"`
 	Color        string `json:"color"`
 }
 

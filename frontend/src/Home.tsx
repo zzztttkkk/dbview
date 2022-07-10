@@ -19,13 +19,13 @@ export interface HomeProps {
 }
 
 const colors = [
-    "#592C63", "#FFBA84", "#3F2B36",
-    "#F7D94C", "#096148", "#0F2540",
-    "#D7C4BB", "#646A58", "#005CAF",
+    "#592C63", "#FFBA84", "#96632E",
+    "#F7D94C", "#787D7B", "#BEC23F",
+    "#D7C4BB", "#A8D8B9", "#005CAF",
     "#58B2DC", "#B5495B", "#FEDFE1",
     "#897D55", "#577C8A", "#516E41",
-    "#994639", "#24936E", "#A5DEE4",
-    "#D75455", "#434343", "#947A6D"
+    "#C73E3A", "#24936E", "#F05E1C",
+    "#D75455", "#90B44B", "#6E75A4"
 ];
 
 let currentProjName: string = "";
@@ -47,10 +47,8 @@ export function Home(props: HomeProps) {
         return false;
     }
 
-
     useEffect(function () {
         WindowSetTitle("DBView");
-
         const ele = ulWrapperRef.current as any as HTMLElement;
         const fli = ele.querySelector("li");
         if (fli) setLiHeight(fli.clientHeight);
@@ -96,12 +94,9 @@ export function Home(props: HomeProps) {
                                         className={css({
                                             width: "16px",
                                             height: "16px",
-                                            background: p.color ? p.color : "",
+                                            background: p.color || theme.colors.contentPrimary,
                                             borderRadius: "50%",
                                             cursor: "pointer",
-                                            borderColor: p.color ? "" : theme.colors.contentPositive,
-                                            borderStyle: p.color ? "none" : "solid",
-                                            borderWidth: p.color ? "0px" : "1px"
                                         })}
                                         onClick={(evt) => {
                                             evt.stopPropagation();
@@ -118,8 +113,8 @@ export function Home(props: HomeProps) {
                                                 const top = evtEle.offsetTop - (ulWrapperRef.current! as HTMLElement).scrollTop;
                                                 setColorPickerCss({
                                                     position: "absolute",
-                                                    left: `${evtEle.offsetLeft + 1}px`,
-                                                    top: `${top + 1}px`
+                                                    left: `${evtEle.offsetLeft}px`,
+                                                    top: `${top}px`
                                                 });
                                             } else {
                                                 setColorPickerWrapperCss({display: "none"});
@@ -137,23 +132,6 @@ export function Home(props: HomeProps) {
                                         {`${p.name}`}
                                     </h2>
                                 </StyledLink>
-                                {
-                                    p.read_only
-                                        ?
-                                        <h6
-                                            className={css({
-                                                fontSize: theme.sizing.scale600,
-                                                fontWeight: "400",
-                                                color: theme.colors.negative400,
-                                                display: "flex",
-                                                flexDirection: "column",
-                                                justifyContent: "center",
-                                                marginLeft: theme.sizing.scale400
-                                            })}
-                                        >ReadOnly</h6>
-                                        :
-                                        null
-                                }
                             </div>
                             <div>
                                 <p className={css({

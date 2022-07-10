@@ -12,7 +12,7 @@ export function ProjectView(props: ProjectViewProps) {
     const [dbs, setDbs] = useState(null);
 
     useEffect(function () {
-        WindowSetTitle(`DBView:${props.project.name}`);
+        WindowSetTitle(`DBView: ${props.project.name}`);
     }, [props.project])
 
     return <div>
