@@ -33,7 +33,7 @@ func (proj *Project) get(txn *badger.Txn, key string, dist interface{}) error {
 // dist is a pointer of slice
 func (proj *Project) scan(txn *badger.Txn, prefix string, dist interface{}) error {
 	dV := reflect.ValueOf(dist).Elem()
-	eleT := dV.Elem().Type()
+	eleT := dV.Type().Elem()
 	ps := []byte(prefix)
 
 	iter := txn.NewIterator(badger.DefaultIteratorOptions)
@@ -46,12 +46,13 @@ func (proj *Project) scan(txn *badger.Txn, prefix string, dist interface{}) erro
 			if e != nil {
 				return e
 			}
-			dV = reflect.Append(dV, obj)
+			dV = reflect.Append(dV, obj.Elem())
 			return nil
 		})
 		if err != nil {
 			return err
 		}
+
 	}
 	reflect.ValueOf(dist).Elem().Set(dV)
 	return nil
