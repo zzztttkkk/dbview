@@ -2,6 +2,7 @@ import {main} from "../wailsjs/go/models";
 import React, {useEffect, useState} from "react";
 import {StyledLink} from "baseui/link";
 import {WindowSetTitle} from "../wailsjs/runtime";
+import {ListDatabases} from "../wailsjs/go/main/App";
 
 export interface ProjectViewProps {
     all: main.ProjectListItem[];
@@ -13,6 +14,11 @@ export function ProjectView(props: ProjectViewProps) {
 
     useEffect(function () {
         WindowSetTitle(`DBView: ${props.project.name}`);
+        ListDatabases(props.project.name).then((v) => {
+            console.log(v);
+        }).catch(e => {
+            console.log(e);
+        });
     }, [props.project])
 
     return <div>

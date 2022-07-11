@@ -15,8 +15,9 @@ type App struct {
 	sync.Mutex
 	ctx context.Context
 
-	root  string
-	items map[string]*ProjectListItem
+	root     string
+	items    map[string]*ProjectListItem
+	projects map[string]*Project
 }
 
 func NewApp() *App {
@@ -149,11 +150,19 @@ func (app *App) SetColor(name string, color string) {
 	proj.Color = color
 }
 
-type ProjectInfo struct {
-	Name      string   `json:"name"`
-	RedisList []string `json:"redis_list"`
-}
+func (app *App) ListDatabases(name string) ([]DBInfo, error) {
+	app.Lock()
+	defer app.Unlock()
 
-func (app *App) OpenProject(name string) ProjectInfo {
-	return ProjectInfo{}
+	root := app.Root()
+	proj := app.projects[name]
+	var err error
+	if proj == nil {
+		proj, err = OpenProject(path.Join(root, name))
+		if err != nil {
+			return nil, err
+		}
+		app.projects[name] = proj
+	}
+	return proj.Databases()
 }

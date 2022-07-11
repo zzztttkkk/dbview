@@ -2,8 +2,8 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
 	"github.com/dgraph-io/badger/v3"
+	"reflect"
 )
 
 type Project struct {
@@ -28,6 +28,33 @@ func (proj *Project) get(txn *badger.Txn, key string, dist interface{}) error {
 	return item.Value(func(val []byte) error {
 		return json.Unmarshal(val, dist)
 	})
+}
+
+// dist is a pointer of slice
+func (proj *Project) scan(txn *badger.Txn, prefix string, dist interface{}) error {
+	dV := reflect.ValueOf(dist).Elem()
+	eleT := dV.Elem().Type()
+	ps := []byte(prefix)
+
+	iter := txn.NewIterator(badger.DefaultIteratorOptions)
+	defer iter.Close()
+	for iter.Seek(ps); iter.ValidForPrefix(ps); iter.Next() {
+		item := iter.Item()
+		err := item.Value(func(val []byte) error {
+			obj := reflect.New(eleT)
+			e := json.Unmarshal(val, obj.Interface())
+			if e != nil {
+				return e
+			}
+			dV = reflect.Append(dV, obj)
+			return nil
+		})
+		if err != nil {
+			return err
+		}
+	}
+	reflect.ValueOf(dist).Elem().Set(dV)
+	return nil
 }
 
 func (proj *Project) set(txn *badger.Txn, key string, val interface{}) error {
@@ -55,14 +82,18 @@ func (proj *Project) exists(txn *badger.Txn, key string) (bool, error) {
 	return true, nil
 }
 
-var (
-	DBListInfosKey = "DBListInfos"
-	DBListSortsKey = "DBListSorting"
-)
+type DBInfo struct {
+	Name       string `json:"name"`
+	Type       string `json:"type"`
+	Sorting    int64  `json:"sorting"`
+	LastOpenAt int64  `json:"last_open_at"`
+	Opts       string `json:"opts"`
+}
 
-func (proj *Project) Databases() {
+func (proj *Project) Databases() ([]DBInfo, error) {
+	var lst []DBInfo
 	err := proj.db.View(func(txn *badger.Txn) error {
-		return nil
+		return proj.scan(txn, "DB:", &lst)
 	})
-	fmt.Println(err)
+	return lst, err
 }

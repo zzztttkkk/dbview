@@ -7,5 +7,5 @@ export function Query(arg1, arg2, arg3) {
 }
 
 export function Register(arg1, arg2) {
-  return window['go']['dbs']['MysqlProxy']['Register'](arg1, arg2);
+  window['go']['dbs']['MysqlProxy']['Register'](arg1, arg2);
 }
