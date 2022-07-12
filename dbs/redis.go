@@ -18,25 +18,19 @@ type RedisOpts struct {
 	Username string     `json:"username"`
 	Password string     `json:"password"`
 	TLS      *TLSConfig `json:"tls"`
+	Timeout  float64    `json:"timeout"`
 }
 
 type RedisProxy struct {
 	rw   sync.RWMutex
 	opts map[string]*redis.Options
 	clis map[string]*redis.Client
-
-	timeout float64
 }
 
-func NewRedisProxy(timeout float64) *RedisProxy {
-	if timeout < 1 {
-		timeout = 1
-	}
-
+func NewRedisProxy() *RedisProxy {
 	return &RedisProxy{
-		opts:    map[string]*redis.Options{},
-		clis:    map[string]*redis.Client{},
-		timeout: timeout,
+		opts: map[string]*redis.Options{},
+		clis: map[string]*redis.Client{},
 	}
 }
 
@@ -148,12 +142,11 @@ func (rp *RedisProxy) call(name string, cmd string, args ...interface{}) (interf
 	if err != nil {
 		return nil, err
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(float64(time.Second)*rp.timeout))
-	defer cancel()
+
 	cliv := reflect.ValueOf(cli).Elem()
 	fnv := cliv.MethodByName(cmd)
 	var inargs []reflect.Value
-	inargs = append(inargs, reflect.ValueOf(ctx))
+	inargs = append(inargs, reflect.ValueOf(context.Background()))
 	for _, arg := range args {
 		inargs = append(inargs, reflect.ValueOf(arg))
 	}
@@ -242,21 +235,6 @@ func (rp *RedisProxy) xmsgscmd(name string, cmd string, args ...interface{}) ([]
 		return nil, err
 	}
 	return (resp.(*redis.XMessageSliceCmd)).Result()
-}
-
-func (rp *RedisProxy) Ping(name string) (int64, error) {
-	cli, err := rp.get(name)
-	if err != nil {
-		return 0, err
-	}
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*time.Duration(rp.timeout))
-	defer cancel()
-
-	begin := time.Now()
-	if err = cli.Ping(ctx).Err(); err != nil {
-		return 0, err
-	}
-	return time.Now().UnixNano() - begin.UnixNano(), nil
 }
 
 func (rp *RedisProxy) Del(name string, keys []string) (int64, error) {

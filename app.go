@@ -13,7 +13,7 @@ import (
 )
 
 type App struct {
-	sync.Mutex
+	mut sync.Mutex
 	ctx context.Context
 
 	root     string
@@ -77,8 +77,8 @@ func (app *App) save() {
 }
 
 func (app *App) ListProjects() ([]ProjectListItem, error) {
-	app.Lock()
-	defer app.Unlock()
+	app.mut.Lock()
+	defer app.mut.Unlock()
 
 	root := app.Root()
 
@@ -122,8 +122,8 @@ func (app *App) ListProjects() ([]ProjectListItem, error) {
 }
 
 func (app *App) CreateProject(name string) error {
-	app.Lock()
-	defer app.Unlock()
+	app.mut.Lock()
+	defer app.mut.Unlock()
 
 	root := app.Root()
 	fp := path.Join(root, name)
@@ -141,8 +141,8 @@ func (app *App) CreateProject(name string) error {
 }
 
 func (app *App) SetColor(name string, color string) {
-	app.Lock()
-	defer app.Unlock()
+	app.mut.Lock()
+	defer app.mut.Unlock()
 
 	proj := app.items[name]
 	if proj == nil {
@@ -152,8 +152,8 @@ func (app *App) SetColor(name string, color string) {
 }
 
 func (app *App) getProj(name string) (*Project, error) {
-	app.Lock()
-	defer app.Unlock()
+	app.mut.Lock()
+	defer app.mut.Unlock()
 
 	proj := app.projects[name]
 	if proj == nil {
@@ -177,24 +177,24 @@ func (app *App) ListDatabases(name string) ([]DBInfo, error) {
 }
 
 func (app *App) NewMysqlDatabase(name string, opts dbs.MysqlOpts) error {
-	app.Lock()
+	app.mut.Lock()
 	proj := app.projects[name]
-	app.Unlock()
+	app.mut.Unlock()
 
 	return proj.newDatabase(name, "mysql", opts)
 }
 
 func (app *App) NewPostgresqlDatabase(name string, opts dbs.PostgresqlOpts) error {
-	app.Lock()
+	app.mut.Lock()
 	proj := app.projects[name]
-	app.Unlock()
+	app.mut.Unlock()
 
 	return proj.newDatabase(name, "postgresql", opts)
 }
 
 func (app *App) NewRedisDatabase(name string, opts dbs.RedisOpts) error {
-	app.Lock()
+	app.mut.Lock()
 	proj := app.projects[name]
-	app.Unlock()
+	app.mut.Unlock()
 	return proj.newDatabase(name, "redis", opts)
 }

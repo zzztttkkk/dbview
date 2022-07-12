@@ -7,9 +7,8 @@ import (
 )
 
 var rp = &RedisProxy{
-	opts:    map[string]*redis.Options{},
-	clis:    map[string]*redis.Client{},
-	timeout: 0.5,
+	opts: map[string]*redis.Options{},
+	clis: map[string]*redis.Client{},
 }
 
 func init() {

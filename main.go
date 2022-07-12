@@ -25,9 +25,8 @@ func main() {
 		OnShutdown: app.shutdown,
 		Bind: []interface{}{
 			app,
-			dbs.NewRedisProxy(0),
-			dbs.NewMysqlProxy(),
-			dbs.NewPostgresProxy(),
+			dbs.NewRedisProxy(),
+			dbs.NewSqlProxy(),
 		},
 	})
 
