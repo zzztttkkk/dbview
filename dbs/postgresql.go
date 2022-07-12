@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"github.com/lib/pq"
 	"strings"
-	"sync"
 )
 
 type PostgresqlOpts struct {
@@ -53,36 +52,4 @@ func (po *PostgresqlOpts) open() (*sql.DB, error) {
 
 func (po *PostgresqlOpts) cast(val interface{}, _ string) interface{} {
 	return val
-}
-
-type PostgresProxy struct {
-	rw   sync.RWMutex
-	opts map[string]*PostgresqlOpts
-}
-
-func NewPostgresProxy() *PostgresProxy {
-	return &PostgresProxy{opts: map[string]*PostgresqlOpts{}}
-}
-
-func (proxy *PostgresProxy) Register(name string, opts PostgresqlOpts) {
-	proxy.rw.Lock()
-	defer proxy.rw.Unlock()
-
-	nopts := &PostgresqlOpts{}
-	*nopts = opts
-	nopts._Driver = nopts
-	nopts.Mutex = &sync.Mutex{}
-
-	proxy.opts[name] = nopts
-}
-
-func (proxy *PostgresProxy) Query(name string, query string, params []interface{}) (*SqlResult, error) {
-	proxy.rw.RLock()
-	defer proxy.rw.RUnlock()
-
-	opts, ok := proxy.opts[name]
-	if !ok {
-		return nil, fmt.Errorf(`pq: unregistered name "%s"`, name)
-	}
-	return opts.Query(query, params...)
 }

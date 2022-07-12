@@ -1,27 +1,25 @@
 package dbs
 
 import (
-	"encoding/json"
 	"fmt"
-	"sync"
 	"testing"
 )
 
 func TestMysql(t *testing.T) {
-	mo := MysqlOpts{
-		Username: "root",
-		Password: "123456",
-		DB:       "mysql",
-	}
-	mo.Mutex = &sync.Mutex{}
-	mo._Driver = &mo
+	proxy := NewSqlProxy()
+	proxy.RegisterMysql(
+		"A",
+		MysqlOpts{
+			Username: "root",
+			Password: "123456",
+			DB:       "dbv",
+		},
+	)
 
-	r, e := mo.Query("select 1 + 45")
+	r, e := proxy.Query("A", "insert into user(name) values(?)", []interface{}{"ztk34"})
 	if e != nil {
 		fmt.Println(e)
 		return
 	}
-
-	bs, _ := json.Marshal(r)
-	fmt.Println(string(bs))
+	fmt.Println(proxy.Commit("A", r.Tx))
 }

@@ -2,10 +2,8 @@ package dbs
 
 import (
 	"database/sql"
-	"fmt"
 	"github.com/go-sql-driver/mysql"
 	"strconv"
-	"sync"
 )
 
 type MysqlOpts struct {
@@ -69,35 +67,4 @@ func (mo *MysqlOpts) cast(val interface{}, sqltype string) interface{} {
 		break
 	}
 	return val
-}
-
-type MysqlProxy struct {
-	rw   sync.RWMutex
-	opts map[string]*MysqlOpts
-}
-
-func NewMysqlProxy() *MysqlProxy {
-	return &MysqlProxy{opts: map[string]*MysqlOpts{}}
-}
-
-func (proxy *MysqlProxy) Register(name string, opts MysqlOpts) {
-	proxy.rw.Lock()
-	defer proxy.rw.Unlock()
-
-	nopts := &MysqlOpts{}
-	*nopts = opts
-	nopts.Mutex = &sync.Mutex{}
-	nopts._Driver = nopts
-	proxy.opts[name] = nopts
-}
-
-func (proxy *MysqlProxy) Query(name string, query string, params []interface{}) (*SqlResult, error) {
-	proxy.rw.RLock()
-	defer proxy.rw.RUnlock()
-
-	opts, ok := proxy.opts[name]
-	if !ok {
-		return nil, fmt.Errorf(`mysql: unregistered name "%s"`, name)
-	}
-	return opts.Query(query, params...)
 }
