@@ -3,28 +3,215 @@ import React, {useEffect, useState} from "react";
 import {StyledLink} from "baseui/link";
 import {WindowSetTitle} from "../wailsjs/runtime";
 import {ListDatabases} from "../wailsjs/go/main/App";
+import {ListItem} from "baseui/list";
+import {useStyletron} from "baseui";
+import {Input} from "baseui/input";
+import {Select} from "baseui/select";
+import {Btn} from "./comps/Btn";
+import {Modal, ModalBody, ModalButton, ModalFooter, ModalHeader,} from 'baseui/modal';
+import {MysqlOptsForm} from "./comps/MysqlOptsForm";
+import {PostgresqlOptsForm} from "./comps/PostgresqlOptsForm";
+import {RedisOptsForm} from "./comps/RedisOptsForm";
+import Styles from "./comps/Styles";
 
 export interface ProjectViewProps {
     all: main.ProjectListItem[];
     project: main.ProjectListItem;
 }
 
+enum DatabaseType {
+    Mysql,
+    Postgresql,
+    Mongo,
+    Redis,
+}
+
+interface OptsEditorProps {
+    close: () => void;
+    dbName: string;
+    dbType: DatabaseType | null;
+}
+
+function OptsEditor(props: OptsEditorProps) {
+    if (props.dbType == null || !props.dbName) return null;
+    const [, theme] = useStyletron();
+
+    function Editor() {
+        switch (props.dbType) {
+            case DatabaseType.Mysql: {
+                return <MysqlOptsForm/>
+            }
+            case DatabaseType.Postgresql: {
+                return <PostgresqlOptsForm/>
+            }
+            case DatabaseType.Mongo: {
+                return <MysqlOptsForm/>
+            }
+            case DatabaseType.Redis: {
+                return <RedisOptsForm/>
+            }
+            default: {
+                return <div>Unknown Database Type: {`${props.dbType}`}</div>
+            }
+        }
+    }
+
+    return <>
+        <ModalHeader>{`Configure ${DatabaseType[props.dbType]} Database: ${props.dbName}`}</ModalHeader>
+        <ModalBody>
+            <Editor/>
+        </ModalBody>
+        <ModalFooter>
+            <ModalButton
+                kind="tertiary"
+                onClick={props.close}
+                overrides={{
+                    BaseButton: {
+                        style: {
+                            ...Styles.BorderRadiusSizing(theme)
+                        }
+                    }
+                }}
+            >Cancel</ModalButton>
+            <ModalButton
+                kind="tertiary"
+                onClick={props.close}
+                overrides={{
+                    BaseButton: {
+                        style: {
+                            ...Styles.BorderRadiusSizing(theme)
+                        }
+                    }
+                }}
+            >Test</ModalButton>
+            <ModalButton
+                onClick={props.close}
+                overrides={{
+                    BaseButton: {
+                        style: {
+                            ...Styles.BorderRadiusSizing(theme)
+                        }
+                    }
+                }}
+            >Okay</ModalButton>
+        </ModalFooter>
+    </>
+}
+
 export function ProjectView(props: ProjectViewProps) {
-    const [dbs, setDbs] = useState(null);
+    const [dbs, setDbs] = useState([] as main.DBInfo[]);
+    const [css, theme] = useStyletron();
+    const [dbName, setDbName] = useState("");
+    const [dbTypes, setDbTypes] = useState([]);
+    const [isOpen, setIsOpen] = React.useState(false);
 
     useEffect(function () {
         WindowSetTitle(`DBView: ${props.project.name}`);
         ListDatabases(props.project.name).then((v) => {
-            console.log(v);
+            if (v instanceof Error) {
+                window.app.Alert(v.message, {kind: "negative"});
+                return;
+            }
+            setDbs(v || []);
         }).catch(e => {
-            console.log(e);
+            window.app.Alert(e.toString(), {kind: "negative"});
         });
     }, [props.project])
 
-    return <div>
+    function exists(): boolean {
+        for (const db of dbs) {
+            if (db.name === dbName) return true;
+        }
+        return false;
+    }
+
+    return <div className={css({position: "relative"})}>
         <div>
-            <StyledLink href={"#/"}><h2>Home</h2></StyledLink>
+            <ul>
+                {
+                    dbs.map((db) => {
+                        return <ListItem key={db.name}>
+                            <StyledLink>
+                                <h2>{db.name}</h2>
+                            </StyledLink>
+                        </ListItem>
+                    })
+                }
+            </ul>
         </div>
-        <h1>{props.project.name}</h1>
+        <div
+            className={css({
+                marginTop: theme.sizing.scale400,
+                position: "relative",
+                justifyContent: "center",
+                display: "flex",
+            })}
+        >
+            <Input
+                type={"text"} value={dbName}
+                onChange={(e) => {
+                    let val = (e.target as HTMLInputElement).value.replaceAll(/\s/g, "");
+                    if (val.length >= 1) val = `${val[0].toUpperCase()}${val.slice(1)}`;
+                    setDbName(val);
+                }}
+                placeholder={"New Database Name In The App"}
+                autoComplete={"off"}
+                overrides={{
+                    Root: {
+                        style: {
+                            width: "30%",
+                            marginRight: theme.sizing.scale400,
+                        }
+                    }
+                }}
+            />
+            <Select
+                backspaceRemoves={false}
+                value={dbTypes}
+                onChange={params => setDbTypes(params.value as any)}
+                placeholder={"Database Type"}
+                options={
+                    Array.from(Object.keys(DatabaseType))
+                        .filter(k => Number.isNaN(Number.parseInt(k)))
+                        .sort((a, b) => {
+                            // @ts-ignore
+                            return DatabaseType[a] - DatabaseType[b]
+                        }).map(k => {
+                        return {label: k}
+                    })
+                }
+                labelKey={"label"}
+                valueKey={"label"}
+                overrides={{
+                    Root: {
+                        style: {
+                            width: "20%",
+                            marginRight: theme.sizing.scale400,
+                        }
+                    }
+                }}
+            />
+            <Btn
+                disabled={!dbName || exists() || !dbTypes || dbTypes.length < 1}
+                onClick={() => setIsOpen(true)}
+            >Configure</Btn>
+        </div>
+        <Modal
+            isOpen={isOpen} onClose={() => setIsOpen(false)}
+            overrides={{
+                Dialog: {
+                    style: {
+                        width: "800px",
+                        ...Styles.BorderRadiusSizing(theme)
+                    }
+                }
+            }}
+        >
+            <OptsEditor
+                dbName={dbName}
+                dbType={dbTypes && dbTypes.length > 0 ? DatabaseType[(dbTypes[0] as any).label] as any as DatabaseType : null}
+                close={() => setIsOpen(false)}
+            />
+        </Modal>
     </div>
 }

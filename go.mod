@@ -6,6 +6,7 @@ require (
 	github.com/dgraph-io/badger/v3 v3.2103.2
 	github.com/go-redis/redis/v8 v8.11.5
 	github.com/go-sql-driver/mysql v1.6.0
+	github.com/google/uuid v1.1.2
 	github.com/lib/pq v1.10.6
 	github.com/wailsapp/wails/v2 v2.0.0-beta.38
 )
@@ -24,7 +25,6 @@ require (
 	github.com/golang/protobuf v1.3.1 // indirect
 	github.com/golang/snappy v0.0.3 // indirect
 	github.com/google/flatbuffers v1.12.1 // indirect
-	github.com/google/uuid v1.1.2 // indirect
 	github.com/imdario/mergo v0.3.12 // indirect
 	github.com/jchv/go-winloader v0.0.0-20210711035445-715c2860da7e // indirect
 	github.com/klauspost/compress v1.12.3 // indirect

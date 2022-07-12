@@ -4,18 +4,20 @@ import React, {useEffect, useState} from "react";
 import {ListProjects} from "../wailsjs/go/main/App"
 import {main} from "../wailsjs/go/models";
 import {ProjectView} from './ProjectView';
-import {DarkTheme, LightTheme, LocaleProvider, Theme, ThemeProvider} from "baseui";
+import {BaseProvider, DarkTheme, LightTheme, LocaleProvider, Theme, useStyletron} from "baseui";
 import {Provider as StyletronProvider} from 'styletron-react';
 import {Client as Styletron} from 'styletron-engine-atomic';
 import * as Luxon from "luxon";
-import {ToasterContainer} from 'baseui/toast';
+import {toaster, ToasterContainer, ToastProps} from 'baseui/toast';
 import {I18N} from './I18N';
+import Styles from "./comps/Styles";
 
 function nothing() {
 }
 
 function Routers() {
     const [projects, setProjects] = useState([] as main.ProjectListItem[]);
+    const [, theme] = useStyletron();
 
     async function reload() {
         const ps = await ListProjects();
@@ -31,6 +33,30 @@ function Routers() {
         projects.sort((a, b) => {
             return b.last_active_at - a.last_active_at;
         });
+    }
+
+    window.app.Alert = (msg: string, props?: Partial<ToastProps>) => {
+        toaster.show(
+            msg, {
+                closeable: true,
+                autoHideDuration: 5000,
+                overrides: {
+                    Body: {
+                        style: {
+                            width: "400px",
+                            ...Styles.BorderRadiusSizing(theme)
+                        }
+                    },
+                    InnerContainer: {
+                        style: {
+                            width: "100%",
+                            wordWrap: "break-word",
+                        }
+                    }
+                },
+                ...(props || {})
+            }
+        );
     }
 
     return (
@@ -67,21 +93,25 @@ const engine = new Styletron();
 
 function App() {
     const [themeName, setThemeName] = useState("light");
-    window.AppChangeTheme = (name: string) => {
+    window.app = {} as any;
+
+    window.app.ChangeTheme = (name: string) => {
         setThemeName(name);
     }
+
     const [localeName, setLocaleName] = useState("en");
     Luxon.Settings.defaultLocale = localeName;
-    window.AppChangeLocale = (name: string) => {
+    window.app.ChangeLocale = (name: string) => {
         setLocaleName(name);
     }
+
 
     return (
         <StyletronProvider value={engine}>
             <LocaleProvider locale={I18N(localeName)}>
-                <ThemeProvider theme={themes[themeName] || LightTheme}>
+                <BaseProvider theme={themes[themeName] || LightTheme}>
                     <Routers/>
-                </ThemeProvider>
+                </BaseProvider>
             </LocaleProvider>
         </StyletronProvider>
     )

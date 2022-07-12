@@ -7,7 +7,6 @@ export function Btn(props: ButtonProps) {
     const [, theme] = useStyletron();
     return (
         <Button
-            {...props}
             overrides={{
                 BaseButton: {
                     style: {
@@ -15,6 +14,7 @@ export function Btn(props: ButtonProps) {
                     }
                 }
             }}
+            {...props}
         >{props.children}</Button>
     )
 }

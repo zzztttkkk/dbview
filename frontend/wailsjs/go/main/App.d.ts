@@ -3,8 +3,6 @@
 import {main} from '../models';
 import {dbs} from '../models';
 
-export function Root():Promise<string>;
-
 export function SetColor(arg1:string,arg2:string):void;
 
 export function CreateProject(arg1:string):Promise<Error>;
@@ -18,3 +16,5 @@ export function NewMysqlDatabase(arg1:string,arg2:dbs.MysqlOpts):Promise<Error>;
 export function NewPostgresqlDatabase(arg1:string,arg2:dbs.PostgresqlOpts):Promise<Error>;
 
 export function NewRedisDatabase(arg1:string,arg2:dbs.RedisOpts):Promise<Error>;
+
+export function Root():Promise<string>;

@@ -23,7 +23,8 @@ type App struct {
 
 func NewApp() *App {
 	return &App{
-		items: map[string]*ProjectListItem{},
+		items:    map[string]*ProjectListItem{},
+		projects: map[string]*Project{},
 	}
 }
 

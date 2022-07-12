@@ -10,8 +10,6 @@ import {WindowSetTitle} from "../wailsjs/runtime";
 import * as Luxon from "luxon";
 import {CirclePicker} from "react-color";
 import {StyleObject} from "styletron-standard";
-import {toaster} from 'baseui/toast';
-import Styles from "./comps/Styles";
 
 export interface HomeProps {
     projects: main.ProjectListItem[];
@@ -157,7 +155,7 @@ export function Home(props: HomeProps) {
                 value={name}
                 onChange={(e) => {
                     let val = (e.target as HTMLInputElement).value.replaceAll(/\s/g, "");
-                    if (val.length > 1) val = `${val[0].toUpperCase()}${val.slice(1)}`;
+                    if (val.length >= 1) val = `${val[0].toUpperCase()}${val.slice(1)}`;
                     setName(val);
                 }}
                 placeholder={"New Project Name"}
@@ -177,26 +175,8 @@ export function Home(props: HomeProps) {
                         if (!name) return;
                         try {
                             await CreateProject(name)
-                        } catch (e) {
-                            toaster.negative(
-                                e as string, {
-                                    closeable: true,
-                                    autoHideDuration: 3000,
-                                    overrides: {
-                                        Body: {
-                                            style: {
-                                                ...Styles.BorderRadiusSizing(theme)
-                                            }
-                                        },
-                                        InnerContainer: {
-                                            style: {
-                                                width: "100%",
-                                                wordWrap: "break-word",
-                                            }
-                                        }
-                                    }
-                                }
-                            );
+                        } catch (e: any) {
+                            window.app.Alert(e.toString(), {kind: "negative"});
                             return;
                         }
                         setName("");

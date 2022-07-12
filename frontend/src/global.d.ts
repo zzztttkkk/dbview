@@ -1,3 +1,5 @@
+import {ToastProps} from "baseui/toast";
+
 declare module "*.png" {
     const value: string;
     export = value;
@@ -13,6 +15,18 @@ declare module "*.ico" {
     export = value;
 }
 
-declare function AppChangeTheme(name: string): void;
 
-declare function AppChangeLocale(name: string): void;
+export interface IApp {
+    ChangeTheme(name: string): void;
+
+    ChangeLocale(name: string): void;
+
+    Alert(msg: string, props?: Partial<ToastProps>): void;
+}
+
+
+declare global {
+    interface Window {
+        app: IApp;
+    }
+}
