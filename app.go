@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"dbview/dbs"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -150,19 +151,50 @@ func (app *App) SetColor(name string, color string) {
 	proj.Color = color
 }
 
-func (app *App) ListDatabases(name string) ([]DBInfo, error) {
+func (app *App) getProj(name string) (*Project, error) {
 	app.Lock()
 	defer app.Unlock()
 
-	root := app.Root()
 	proj := app.projects[name]
-	var err error
 	if proj == nil {
+		root := app.Root()
+		var err error
 		proj, err = OpenProject(path.Join(root, name))
 		if err != nil {
 			return nil, err
 		}
 		app.projects[name] = proj
 	}
+	return proj, nil
+}
+
+func (app *App) ListDatabases(name string) ([]DBInfo, error) {
+	proj, err := app.getProj(name)
+	if err != nil {
+		return nil, err
+	}
 	return proj.Databases()
+}
+
+func (app *App) NewMysqlDatabase(name string, opts dbs.MysqlOpts) error {
+	app.Lock()
+	proj := app.projects[name]
+	app.Unlock()
+
+	return proj.newDatabase(name, "mysql", opts)
+}
+
+func (app *App) NewPostgresqlDatabase(name string, opts dbs.PostgresqlOpts) error {
+	app.Lock()
+	proj := app.projects[name]
+	app.Unlock()
+
+	return proj.newDatabase(name, "postgresql", opts)
+}
+
+func (app *App) NewRedisDatabase(name string, opts dbs.RedisOpts) error {
+	app.Lock()
+	proj := app.projects[name]
+	app.Unlock()
+	return proj.newDatabase(name, "redis", opts)
 }

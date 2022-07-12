@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/dgraph-io/badger/v3"
 	"reflect"
 )
@@ -97,4 +98,21 @@ func (proj *Project) Databases() ([]DBInfo, error) {
 		return proj.scan(txn, "DB:", &lst)
 	})
 	return lst, err
+}
+
+func (proj *Project) newDatabase(name string, typ string, opts interface{}) error {
+	return proj.db.Update(func(txn *badger.Txn) error {
+		info := DBInfo{
+			Name:       name,
+			Type:       typ,
+			Sorting:    0,
+			LastOpenAt: 0,
+		}
+		v, e := json.Marshal(opts)
+		if e != nil {
+			return e
+		}
+		info.Opts = string(v)
+		return proj.set(txn, fmt.Sprintf("DB:%s", name), info)
+	})
 }
