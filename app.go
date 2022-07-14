@@ -199,3 +199,10 @@ func (app *App) NewRedisDatabase(name string, opts dbs.RedisOpts) error {
 	app.mut.Unlock()
 	return proj.newDatabase(name, "redis", opts)
 }
+
+func (app *App) DropDatabase(name string, dbname string) {
+	app.mut.Lock()
+	proj := app.projects[name]
+	app.mut.Unlock()
+	proj.DropDatabase(dbname)
+}

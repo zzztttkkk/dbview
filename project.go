@@ -116,3 +116,13 @@ func (proj *Project) newDatabase(name string, typ string, opts interface{}) erro
 		return proj.set(txn, fmt.Sprintf("DB:%s", name), info)
 	})
 }
+
+func (proj *Project) DropDatabase(name string) {
+	_ = proj.db.Update(func(txn *badger.Txn) error {
+		proj.del(
+			txn,
+			fmt.Sprintf("DB:%s", name),
+		)
+		return nil
+	})
+}
