@@ -1,4 +1,4 @@
-import {main} from "../wailsjs/go/models";
+import {dbs, main} from "../wailsjs/go/models";
 import React, {useEffect, useState} from "react";
 import {StyledLink} from "baseui/link";
 import {WindowSetTitle} from "../wailsjs/runtime";
@@ -13,6 +13,7 @@ import {MysqlOptsForm} from "./comps/MysqlOptsForm";
 import {PostgresqlOptsForm} from "./comps/PostgresqlOptsForm";
 import {RedisOptsForm} from "./comps/RedisOptsForm";
 import Styles from "./comps/Styles";
+import {MongoOptsForm} from "./comps/MongoOptsForm";
 
 export interface ProjectViewProps {
     all: main.ProjectListItem[];
@@ -35,17 +36,20 @@ interface OptsEditorProps {
 function OptsEditor(props: OptsEditorProps) {
     if (props.dbType == null || !props.dbName) return null;
     const [, theme] = useStyletron();
+    let MysqlOptsGetter: (() => dbs.MysqlOpts) | null = null;
 
     function Editor() {
         switch (props.dbType) {
             case DatabaseType.Mysql: {
-                return <MysqlOptsForm/>
+                return <MysqlOptsForm setCfgGetter={(fn) => {
+                    MysqlOptsGetter = fn;
+                }}/>
             }
             case DatabaseType.Postgresql: {
                 return <PostgresqlOptsForm/>
             }
             case DatabaseType.Mongo: {
-                return <MysqlOptsForm/>
+                return <MongoOptsForm/>
             }
             case DatabaseType.Redis: {
                 return <RedisOptsForm/>
@@ -85,7 +89,13 @@ function OptsEditor(props: OptsEditorProps) {
                 }}
             >Test</ModalButton>
             <ModalButton
-                onClick={props.close}
+                onClick={(evt) => {
+                    evt.stopPropagation();
+                    evt.preventDefault();
+                    if (MysqlOptsGetter) {
+                        console.log(MysqlOptsGetter());
+                    }
+                }}
                 overrides={{
                     BaseButton: {
                         style: {
@@ -201,7 +211,7 @@ export function ProjectView(props: ProjectViewProps) {
             overrides={{
                 Dialog: {
                     style: {
-                        width: "800px",
+                        width: "875px",
                         ...Styles.BorderRadiusSizing(theme)
                     }
                 }

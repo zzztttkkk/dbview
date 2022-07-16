@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/dgraph-io/badger/v3"
+	"github.com/dgraph-io/badger/v3/options"
 	"reflect"
 )
 
@@ -13,7 +14,7 @@ type Project struct {
 
 func OpenProject(path string) (*Project, error) {
 	proj := &Project{}
-	db, err := badger.Open(badger.DefaultOptions(path))
+	db, err := badger.Open(badger.DefaultOptions(path).WithCompression(options.None))
 	if err != nil {
 		return nil, err
 	}

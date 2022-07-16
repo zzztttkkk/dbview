@@ -1,21 +1,43 @@
 import React, {useState} from "react";
-import {Input} from "baseui/input";
+import {Input, SIZE} from "baseui/input";
 import {useStyletron} from "baseui";
 import {Select} from "baseui/select";
+import {StatefulTooltip} from "baseui/tooltip";
 import {Btn} from "./Btn";
 import Styles from "./Styles";
+import {SIZE as BtnSize} from "baseui/button";
+import {dbs} from "../../wailsjs/go/models";
 
 interface MysqlOptsFormProps {
+    host?: string;
+    port?: number | string;
+    db?: string;
+    username?: string;
+    password?: string;
+    timeout?: number | string;
+    tls?: {
+        pem?: string;
+        servername?: string;
+    },
+    setCfgGetter: (fn: () => dbs.MysqlOpts) => void;
 }
+
+const MysqlTLSPemFileInput = "MysqlTLSPemFileInput"
 
 export function MysqlOptsForm(props: MysqlOptsFormProps) {
     const [css, theme] = useStyletron();
-    const [host, setHost] = useState("");
-    const [port, setPort] = useState("" as (number | string));
-    const [dbName, setDbName] = useState("");
-    const [userName, setUserName] = useState("");
-    const [pwd, setPwd] = useState("");
-    const [timeout, setTimeout] = useState("" as (number | string));
+    const [host, setHost] = useState(props.host || "");
+    const [port, setPort] = useState(props.port);
+    const [db, setDb] = useState(props.db);
+    const [username, setUsername] = useState(props.username || "");
+    const [password, setPassword] = useState(props.password || "");
+    const [timeout, setTimeout] = useState(props.timeout || "");
+
+    function getCfg(): dbs.MysqlOpts {
+        return new dbs.MysqlOpts();
+    }
+
+    props.setCfgGetter(getCfg);
 
     return <>
         <div className={css({display: "flex", justifyContent: "center",})}>
@@ -62,20 +84,20 @@ export function MysqlOptsForm(props: MysqlOptsFormProps) {
         <div className={css({margin: `${theme.sizing.scale400} 0`})}>
             <Input
                 type={"text"} required={true}
-                value={dbName}
-                onChange={event => setDbName((event.target as HTMLInputElement).value)}
+                value={db}
+                onChange={event => setDb((event.target as HTMLInputElement).value)}
                 placeholder={"database name in remote host, default to 'mysql'"}
             />
         </div>
         <div className={css({display: "flex", justifyContent: "center", margin: `${theme.sizing.scale400} 0`})}>
             <Input
                 type={"text"} required={true}
-                value={userName}
-                onChange={event => setUserName((event.target as HTMLInputElement).value)}
+                value={username}
+                onChange={event => setUsername((event.target as HTMLInputElement).value)}
                 overrides={{
                     Root: {
                         style: {
-                            width: `40%`,
+                            width: `350px`,
                             marginRight: theme.sizing.scale400
                         }
                     }
@@ -84,29 +106,16 @@ export function MysqlOptsForm(props: MysqlOptsFormProps) {
             />
             <Input
                 type={"password"} required={true}
-                value={pwd}
-                onChange={event => setPwd((event.target as HTMLInputElement).value)}
+                value={password}
+                onChange={event => setPassword((event.target as HTMLInputElement).value)}
                 placeholder={"******"}
-                overrides={{
-                    Root: {
-                        style: {
-                            width: `60%`
-                        }
-                    }
-                }}
             />
         </div>
-        <div className={css({display: "flex", justifyContent: "center", margin: `${theme.sizing.scale400} 0`})}>
+        <div className={css({display: "flex", margin: `${theme.sizing.scale400} 0`})}>
             <Select
                 placeholder={"environment"}
                 options={[{label: "Dev"}, {label: "Test"}, {label: "Prod"}]}
-                overrides={{
-                    Root: {
-                        style: {
-                            // width: "25%",
-                        }
-                    }
-                }}
+                overrides={{Root: {style: {width: "160px"}}}}
             />
             <Select
                 placeholder={"read only"}
@@ -114,8 +123,8 @@ export function MysqlOptsForm(props: MysqlOptsFormProps) {
                 overrides={{
                     Root: {
                         style: {
-                            // width: "25%",
-                            margin: `0 ${theme.sizing.scale400}`
+                            margin: `0 ${theme.sizing.scale400}`,
+                            width: "160px",
                         }
                     }
                 }}
@@ -135,30 +144,68 @@ export function MysqlOptsForm(props: MysqlOptsFormProps) {
                     }
                     setTimeout(nv);
                 }}
-                placeholder={"45s"}
+                placeholder={"timeouts,45s"}
                 overrides={{
                     Root: {
                         style: {
-                            // width: `25%`,
+                            width: `160px`,
                             marginRight: theme.sizing.scale400
                         }
                     }
                 }}
             />
-            <Btn
-                onClick={(evt) => {
-                    evt.stopPropagation();
-                    evt.preventDefault();
+            <div className={css({display: "none"})}>
+                <input
+                    type="file" accept={".pem"} id={MysqlTLSPemFileInput}
+                />
+            </div>
+
+            <StatefulTooltip
+                content={() => {
+                    return <div className={css({width: "300px"})}>
+                        <Btn
+                            size={BtnSize.mini}
+                            onClick={(evt) => {
+                                evt.stopPropagation();
+                                evt.preventDefault();
+                                document.getElementById(MysqlTLSPemFileInput)!.click();
+                            }}
+                            overrides={{
+                                Root: {
+                                    style: {
+                                        width: "100%",
+                                        marginBottom: theme.sizing.scale300,
+                                        ...Styles.BorderRadiusSizing(theme),
+                                    }
+                                }
+                            }}
+                        >Select PEM File</Btn>
+                        <Input size={SIZE.mini} type={"text"} placeholder={"Server Name"}/>
+                    </div>
                 }}
+                triggerType={"click"}
                 overrides={{
-                    BaseButton: {
+                    Inner: {
                         style: {
-                            width: "50%",
-                            ...Styles.BorderRadiusSizing(theme)
+                            backgroundColor: theme.colors.backgroundPrimary,
+                            paddingLeft: theme.sizing.scale300,
+                            paddingRight: theme.sizing.scale300,
+                            ...Styles.BorderRadiusSizing(theme),
                         }
                     }
                 }}
-            >SSL</Btn>
+            >
+                <div>
+                    <Btn overrides={{
+                        Root: {
+                            style: {
+                                userSelect: "none",
+                                ...Styles.BorderRadiusSizing(theme),
+                            }
+                        }
+                    }}>TLS</Btn>
+                </div>
+            </StatefulTooltip>
         </div>
     </>
 }
