@@ -14,6 +14,9 @@ import {PostgresqlOptsForm} from "./comps/PostgresqlOptsForm";
 import {RedisOptsForm} from "./comps/RedisOptsForm";
 import Styles from "./comps/Styles";
 import {MongoOptsForm} from "./comps/MongoOptsForm";
+import {TestMysql, TestPostgresql} from "../wailsjs/go/dbs/SqlProxy";
+import MysqlOpts = dbs.MysqlOpts;
+import PostgresqlOpts = dbs.PostgresqlOpts;
 
 export interface ProjectViewProps {
     all: main.ProjectListItem[];
@@ -36,12 +39,13 @@ interface OptsEditorProps {
 function OptsEditor(props: OptsEditorProps) {
     if (props.dbType == null || !props.dbName) return null;
     const [, theme] = useStyletron();
-    let MysqlOptsGetter: (() => dbs.MysqlOpts) | null = null;
+    let MysqlOptsGetter: (() => dbs.MysqlOpts | null) | null = null;
+    let PostgresqlOptsGetter: (() => dbs.PostgresqlOpts) | null = null;
 
     function Editor() {
         switch (props.dbType) {
             case DatabaseType.Mysql: {
-                return <MysqlOptsForm setCfgGetter={(fn) => {
+                return <MysqlOptsForm SetOptsGetter={(fn) => {
                     MysqlOptsGetter = fn;
                 }}/>
             }
@@ -58,6 +62,42 @@ function OptsEditor(props: OptsEditorProps) {
                 return <div>Unknown Database Type: {`${props.dbType}`}</div>
             }
         }
+    }
+
+    function getOpts(): dbs.PostgresqlOpts | dbs.MysqlOpts | null {
+        switch (props.dbType) {
+            case DatabaseType.Mysql: {
+                if (!MysqlOptsGetter) return null;
+                return MysqlOptsGetter();
+            }
+            case DatabaseType.Postgresql: {
+                if (!PostgresqlOptsGetter) return null;
+                return PostgresqlOptsGetter();
+            }
+            default: {
+                return null;
+            }
+        }
+    }
+
+    async function test() {
+        const opts = getOpts();
+        if (!opts) return false;
+        switch (props.dbType) {
+            case DatabaseType.Mysql: {
+                return TestMysql(opts as MysqlOpts);
+            }
+            case DatabaseType.Postgresql: {
+                return TestPostgresql(opts as PostgresqlOpts);
+            }
+            default: {
+                return new Error(`0.0`);
+            }
+        }
+    }
+
+    async function ok() {
+
     }
 
     return <>
@@ -79,7 +119,12 @@ function OptsEditor(props: OptsEditorProps) {
             >Cancel</ModalButton>
             <ModalButton
                 kind="tertiary"
-                onClick={props.close}
+                onClick={async (evt) => {
+                    evt.preventDefault();
+                    evt.stopPropagation();
+                    await test();
+                    props.close();
+                }}
                 overrides={{
                     BaseButton: {
                         style: {
@@ -89,12 +134,11 @@ function OptsEditor(props: OptsEditorProps) {
                 }}
             >Test</ModalButton>
             <ModalButton
-                onClick={(evt) => {
+                onClick={async (evt) => {
                     evt.stopPropagation();
                     evt.preventDefault();
-                    if (MysqlOptsGetter) {
-                        console.log(MysqlOptsGetter());
-                    }
+                    await ok();
+                    props.close();
                 }}
                 overrides={{
                     BaseButton: {

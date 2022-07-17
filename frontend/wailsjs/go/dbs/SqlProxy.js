@@ -10,6 +10,18 @@ export function Rollback(arg1, arg2) {
   return window['go']['dbs']['SqlProxy']['Rollback'](arg1, arg2);
 }
 
+export function TestMysql(arg1) {
+  return window['go']['dbs']['SqlProxy']['TestMysql'](arg1);
+}
+
+export function TestPostgresql(arg1) {
+  return window['go']['dbs']['SqlProxy']['TestPostgresql'](arg1);
+}
+
+export function Unregister(arg1) {
+  return window['go']['dbs']['SqlProxy']['Unregister'](arg1);
+}
+
 export function Commit(arg1, arg2) {
   return window['go']['dbs']['SqlProxy']['Commit'](arg1, arg2);
 }

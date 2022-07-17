@@ -43,20 +43,18 @@ export namespace main {
 
 export namespace dbs {
 	
-	export class TLSConfig {
-	    cert: string;
-	    key: string;
-	    server_name: string;
+	export class TLSPEMConfig {
+	    pem: string;
+	    servername: string;
 	
 	    static createFrom(source: any = {}) {
-	        return new TLSConfig(source);
+	        return new TLSPEMConfig(source);
 	    }
 	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.cert = source["cert"];
-	        this.key = source["key"];
-	        this.server_name = source["server_name"];
+	        this.pem = source["pem"];
+	        this.servername = source["servername"];
 	    }
 	}
 	export class NamedQuery {
@@ -84,7 +82,7 @@ export namespace dbs {
 	    username: string;
 	    password: string;
 	    db: string;
-	    // Go type: TLSConfig
+	    // Go type: TLSPEMConfig
 	    tls?: any;
 	    disable_native_passwords: boolean;
 	    collation: string;
@@ -174,6 +172,22 @@ export namespace dbs {
 		    return a;
 		}
 	}
+	export class TLSConfig {
+	    cert: string;
+	    key: string;
+	    servername: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new TLSConfig(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.cert = source["cert"];
+	        this.key = source["key"];
+	        this.servername = source["servername"];
+	    }
+	}
 	export class RedisOpts {
 	    uri: string;
 	    host: string;
@@ -234,6 +248,7 @@ export namespace dbs {
 	    }
 	}
 	export class SqlResult {
+	    duration: number;
 	    tx: string;
 	    fields: SqlField[];
 	    rows: any[][];
@@ -244,6 +259,7 @@ export namespace dbs {
 	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.duration = source["duration"];
 	        this.tx = source["tx"];
 	        this.fields = this.convertValues(source["fields"], SqlField);
 	        this.rows = source["rows"];

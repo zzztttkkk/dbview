@@ -45,9 +45,10 @@ type _Driver interface {
 }
 
 type SqlResult struct {
-	Tx     string          `json:"tx"`
-	Fields []SqlField      `json:"fields"`
-	Rows   [][]interface{} `json:"rows"`
+	Duration int64           `json:"duration"`
+	Tx       string          `json:"tx"`
+	Fields   []SqlField      `json:"fields"`
+	Rows     [][]interface{} `json:"rows"`
 }
 
 func (sc *SqlCommon) ensure() error {
@@ -86,6 +87,8 @@ func (sc *SqlCommon) Query(query string, params ...interface{}) (result *SqlResu
 		return
 	}
 
+	begin := time.Now()
+
 	defer func() {
 		v := recover()
 		if v == nil && err == nil {
@@ -103,6 +106,9 @@ func (sc *SqlCommon) Query(query string, params ...interface{}) (result *SqlResu
 			if re != nil {
 				err = fmt.Errorf("sql.rollback.err: %s, %s", re.Error(), err.Error())
 			}
+		}
+		if result != nil {
+			result.Duration = time.Since(begin).Milliseconds()
 		}
 	}()
 
@@ -202,12 +208,38 @@ func (proxy *SqlProxy) register(name string, opts interface{}) {
 	proxy.opts[name] = nopts.Interface()
 }
 
+func (proxy *SqlProxy) Unregister(name string) {
+	proxy.mutex.Lock()
+	defer proxy.mutex.Unlock()
+	delete(proxy.opts, name)
+}
+
+func (proxy *SqlProxy) test(opts interface{}) (int64, error) {
+	name := uuid.New().String()
+	defer proxy.Unregister(name)
+
+	proxy.register(name, opts)
+	r, e := proxy.Query(name, "select 1", nil)
+	if e != nil {
+		return 0, e
+	}
+	return r.Duration, nil
+}
+
 func (proxy *SqlProxy) RegisterMysql(name string, opts MysqlOpts) {
 	proxy.register(name, opts)
 }
 
+func (proxy *SqlProxy) TestMysql(opts MysqlOpts) (int64, error) {
+	return proxy.test(opts)
+}
+
 func (proxy *SqlProxy) RegisterPostgresql(name string, opts PostgresqlOpts) {
 	proxy.register(name, opts)
+}
+
+func (proxy *SqlProxy) TestPostgresql(opts PostgresqlOpts) (int64, error) {
+	return proxy.test(opts)
 }
 
 func (proxy *SqlProxy) getOpts(name string) interface{} {

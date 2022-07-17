@@ -1,22 +1,27 @@
 package dbs
 
 import (
+	"crypto/tls"
+	"crypto/x509"
 	"database/sql"
+	"fmt"
 	"github.com/go-sql-driver/mysql"
+	"github.com/google/uuid"
+	"io/ioutil"
 	"strconv"
 )
 
 type MysqlOpts struct {
 	SqlCommon
 
-	Url                    string     `json:"url"`
-	Address                string     `json:"address"`
-	Username               string     `json:"username"`
-	Password               string     `json:"password"`
-	DB                     string     `json:"db"`
-	TLS                    *TLSConfig `json:"tls"`
-	DisableNativePasswords bool       `json:"disable_native_passwords"`
-	Collation              string     `json:"collation"`
+	Url                    string        `json:"url"`
+	Address                string        `json:"address"`
+	Username               string        `json:"username"`
+	Password               string        `json:"password"`
+	DB                     string        `json:"db"`
+	TLS                    *TLSPEMConfig `json:"tls"`
+	DisableNativePasswords bool          `json:"disable_native_passwords"`
+	Collation              string        `json:"collation"`
 }
 
 func (mo *MysqlOpts) open() (*sql.DB, error) {
@@ -46,6 +51,23 @@ func (mo *MysqlOpts) open() (*sql.DB, error) {
 	}
 	cfg.Collation = mo.Collation
 
+	if mo.TLS != nil {
+		pem, err := ioutil.ReadFile(mo.TLS.Pem)
+		if err != nil {
+			return nil, err
+		}
+		pool := x509.NewCertPool()
+		if !pool.AppendCertsFromPEM(pem) {
+			return nil, fmt.Errorf(`mysql: failed to append pem file`)
+		}
+		tcfg := &tls.Config{RootCAs: pool}
+		if len(mo.TLS.ServerName) > 0 {
+			tcfg.ServerName = mo.TLS.ServerName
+		}
+		if err = mysql.RegisterTLSConfig(uuid.New().String(), tcfg); err != nil {
+			return nil, err
+		}
+	}
 	conn, err := mysql.NewConnector(cfg)
 	if err != nil {
 		return nil, err

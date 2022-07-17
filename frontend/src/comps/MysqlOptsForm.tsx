@@ -19,7 +19,7 @@ interface MysqlOptsFormProps {
         pem?: string;
         servername?: string;
     },
-    setCfgGetter: (fn: () => dbs.MysqlOpts) => void;
+    SetOptsGetter: (fn: () => dbs.MysqlOpts | null) => void;
 }
 
 const MysqlTLSPemFileInput = "MysqlTLSPemFileInput"
@@ -33,11 +33,16 @@ export function MysqlOptsForm(props: MysqlOptsFormProps) {
     const [password, setPassword] = useState(props.password || "");
     const [timeout, setTimeout] = useState(props.timeout || "");
 
-    function getCfg(): dbs.MysqlOpts {
-        return new dbs.MysqlOpts();
+    function getCfg(): dbs.MysqlOpts | null {
+        const opts = new dbs.MysqlOpts();
+        opts.address = `${host}:${port}`;
+        if (!db) {
+            return null;
+        }
+        return opts;
     }
 
-    props.setCfgGetter(getCfg);
+    props.SetOptsGetter(getCfg);
 
     return <>
         <div className={css({display: "flex", justifyContent: "center",})}>
@@ -157,6 +162,9 @@ export function MysqlOptsForm(props: MysqlOptsFormProps) {
             <div className={css({display: "none"})}>
                 <input
                     type="file" accept={".pem"} id={MysqlTLSPemFileInput}
+                    onChange={(e) => {
+                        console.log(e);
+                    }}
                 />
             </div>
 
