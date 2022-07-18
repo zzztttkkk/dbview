@@ -1,10 +1,12 @@
 package main
 
 import (
+	"dbview/internal"
 	"encoding/json"
 	"fmt"
 	"github.com/dgraph-io/badger/v3"
 	"github.com/dgraph-io/badger/v3/options"
+	"path"
 	"reflect"
 )
 
@@ -12,13 +14,23 @@ type Project struct {
 	db *badger.DB
 }
 
-func OpenProject(path string) (*Project, error) {
+func OpenProject(fp string) (*Project, error) {
 	proj := &Project{}
-	db, err := badger.Open(badger.DefaultOptions(path).WithCompression(options.None))
+	db, err := badger.Open(badger.DefaultOptions(fp).WithCompression(options.None))
 	if err != nil {
 		return nil, err
 	}
 	proj.db = db
+	internal.ExtOptsGetter.Register(path.Base(fp), func(db string) map[string]interface{} {
+		var ext map[string]interface{}
+		e := proj.db.View(func(txn *badger.Txn) error {
+			return proj.get(txn, fmt.Sprintf("DBExt:%s", db), &ext)
+		})
+		if e != nil {
+			return nil
+		}
+		return ext
+	})
 	return proj, nil
 }
 

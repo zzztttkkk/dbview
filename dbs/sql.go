@@ -3,6 +3,7 @@ package dbs
 import (
 	"context"
 	"database/sql"
+	"dbview/internal"
 	"fmt"
 	"github.com/google/uuid"
 	"reflect"
@@ -26,6 +27,8 @@ type SqlCommon struct {
 	_Driver     `json:"-"`
 	DB          *sql.DB `json:"-"`
 	txMap       *sync.Map
+	proj        string
+	name        string
 }
 
 func initSqlCommon(v *SqlCommon, d _Driver) {
@@ -61,6 +64,10 @@ func (sc *SqlCommon) ensure() error {
 	db, err := sc.open()
 	sc.DB = db
 	return err
+}
+
+func (sc *SqlCommon) ext() map[string]interface{} {
+	return internal.ExtOptsGetter.Get(sc.proj, sc.name)
 }
 
 type LazyTx struct {
@@ -191,6 +198,7 @@ func (sc *SqlCommon) Rollback(tx string) error {
 type SqlProxy struct {
 	mutex sync.Mutex
 	opts  map[string]interface{}
+	proj  string
 }
 
 func NewSqlProxy() *SqlProxy {
@@ -204,7 +212,10 @@ func (proxy *SqlProxy) register(name string, opts interface{}) {
 	nopts := reflect.New(reflect.TypeOf(opts))
 	nopts.Elem().Set(reflect.ValueOf(opts))
 	inf := nopts.Elem().FieldByName("SqlCommon").Addr().Interface()
-	initSqlCommon((inf).(*SqlCommon), nopts.Interface().(_Driver))
+	sc := (inf).(*SqlCommon)
+	sc.proj = proxy.proj
+	sc.name = name
+	initSqlCommon(sc, nopts.Interface().(_Driver))
 	proxy.opts[name] = nopts.Interface()
 }
 

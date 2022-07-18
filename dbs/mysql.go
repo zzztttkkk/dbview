@@ -29,6 +29,7 @@ func (mo *MysqlOpts) open() (*sql.DB, error) {
 		cfg *mysql.Config
 		err error
 	)
+
 	if len(mo.Url) > 0 {
 		cfg, err = mysql.ParseDSN(mo.Url)
 		if err != nil {
@@ -43,12 +44,6 @@ func (mo *MysqlOpts) open() (*sql.DB, error) {
 		cfg.Passwd = mo.Password
 	}
 
-	if !mo.DisableNativePasswords {
-		cfg.AllowNativePasswords = true
-	}
-	if len(mo.Collation) < 1 {
-		mo.Collation = "utf8mb4_unicode_ci"
-	}
 	cfg.Collation = mo.Collation
 
 	if mo.TLS != nil {

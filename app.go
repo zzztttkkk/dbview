@@ -3,8 +3,10 @@ package main
 import (
 	"context"
 	"dbview/dbs"
+	"dbview/internal"
 	"encoding/json"
 	"fmt"
+	"github.com/dgraph-io/badger/v3"
 	"io/ioutil"
 	"os"
 	"path"
@@ -205,4 +207,17 @@ func (app *App) DropDatabase(name string, dbname string) {
 	proj := app.projects[name]
 	app.mut.Unlock()
 	proj.DropDatabase(dbname)
+}
+
+func (app *App) QueryDatabaseExtOpts(name string, dbname string) map[string]interface{} {
+	return internal.ExtOptsGetter.Get(name, dbname)
+}
+
+func (app *App) UpdateDatabaseExtOpts(name string, dbname string, ext map[string]interface{}) {
+	app.mut.Lock()
+	proj := app.projects[name]
+	app.mut.Unlock()
+	_ = proj.db.Update(func(txn *badger.Txn) error {
+		return proj.set(txn, fmt.Sprintf("DBExt:%s", dbname), ext)
+	})
 }
